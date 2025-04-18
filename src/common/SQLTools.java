@@ -10,7 +10,7 @@ public final class SQLTools {
 
     public SQLTools(String dbName) throws SQLException {
         this.conn = DriverManager.getConnection(
-                "jdbc:postgresql://localhost:5432/" + dbName, "postgres", "postgres"
+                Settings.getDatabaseUrl(dbName)
         );
     }
 
