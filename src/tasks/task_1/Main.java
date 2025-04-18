@@ -33,9 +33,7 @@ public class Main extends BaseTask {
                         "id", "SERIAL PRIMARY KEY",
                         "result", "FLOAT",
                         "operation", "VARCHAR(50)"
-                ),
-                "sfsdf", Map.of("sdf", "INTEGER",
-                        "sdfsdfsdf", "INTEGER")
+                )
         );
         final String dbName = "task_1";
         Main main = new Main(dbName, tableSchemas);
