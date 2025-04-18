@@ -4,18 +4,16 @@ import common.BaseTask;
 import common.SQLTools;
 
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Main extends BaseTask {
-    private static String menuText = "";
 
-    public Main(String dbName) throws SQLException {
-        super(new SQLTools(dbName));
+    public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
+        super(new SQLTools(dbName, tableSchemas));
         menuText = """
                 1. Вывести все таблицы из БД.
-                2. Создать таблицу в БД.
+                2. Создать таблицу(-ы) в БД.
                 3. Сложение чисел, результат сохранить в БД с последующим выводом в консоль.
                 4. Вычитание чисел, результат сохранить в БД с последующим выводом в консоль.
                 5. Умножение чисел, результат сохранить в БД с последующим выводом в консоль.
@@ -24,22 +22,33 @@ public class Main extends BaseTask {
                 8. Возведение числа в модуль, результат сохранить в БД с последующим выводом в консоль.
                 9. Возведение числа в степень, результат сохранить в БД с последующим выводом в консоль.
                 10. Сохранить все данные (вышеполученные результаты) из БД в Excel и вывести на экран.
-                11. Остановить программу.
+                11. Показать меню
+                12. Остановить программу.
                 """;
     }
 
     public static void main(String[] args) throws SQLException {
-        Main main = new Main("task_1");
+        final Map<String, Map<String, String>> tableSchemas = Map.of(
+                "expressions", Map.of(
+                        "id", "SERIAL PRIMARY KEY",
+                        "result", "FLOAT",
+                        "operation", "VARCHAR(50)"
+                ),
+                "sfsdf", Map.of("sdf", "INTEGER",
+                        "sdfsdfsdf", "INTEGER")
+        );
+        final String dbName = "task_1";
+        Main main = new Main(dbName, tableSchemas);
 
         System.out.println("Практическая работа 1");
-        System.out.println(menuText);
+        main.showMenu(menuText);
 
         String var = "";
         int menuPunkt = 0;
 
         Scanner sc = new Scanner(System.in);
 
-        while (!"11".equals(var)) {
+        while (!"12".equals(var)) {
             var = sc.next();
 
             try {
@@ -50,57 +59,39 @@ public class Main extends BaseTask {
 
             switch (menuPunkt) {
                 case 1 -> main.showTables();
-                case 2 -> main.createTables(
-                        List.of("expressions"),
-                        List.of(
-                                Map.of(
-                                        "id", "SERIAL PRIMARY KEY",
-                                        "result", "VARCHAR(255)",
-                                        "operation", "VARCHAR(255)"
-                                )
-                        )
-                );
-                case 3 -> main.count();
+                case 2 -> main.createTables();
+                case 3 -> main.count("+");
+                case 4 -> main.count("-");
+                case 5 -> main.count("*");
+                case 6 -> main.count("/");
+                case 7 -> main.count("%");
+                case 8 -> main.count("abs");
+                case 9 -> main.count("pow");
                 case 10 -> main.saveToExcel();
+                case 11 -> main.showMenu(menuText);
+                case 12 -> System.out.println("Программа завершила работу");
+                default -> System.out.println("Неверная опция");
             }
         }
+        main.sqlTools.closeConnection();
+
     }
 
-    public void count() throws SQLException {
+    public void count(String operation) throws SQLException {
         Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Выберите операцию:");
-        System.out.println(
-                """
-                        + : сложение
-                        - : вычитание
-                        * : умножение
-                        / : деление
-                        % : остаток от деления
-                        abs : модуль числа
-                        pow : возведение в степень
-                        """
-        );
-
-        String operation = scanner.next();
         double a, b = 0;
-        double result = 0;
+        double result;
 
         if (operation.equals("abs")) {
-            System.out.print("Введите число: ");
-            a = scanner.nextDouble();
+            a = getValidDouble(scanner, "Введите число: ");
             result = Math.abs(a);
         } else if (operation.equals("pow")) {
-            System.out.print("Введите основание: ");
-            a = scanner.nextDouble();
-            System.out.print("Введите степень: ");
-            b = scanner.nextDouble();
+            a = getValidDouble(scanner, "Введите основание: ");
+            b = getValidDouble(scanner, "Введите степень: ");
             result = Math.pow(a, b);
         } else {
-            System.out.print("Введите первое число: ");
-            a = scanner.nextDouble();
-            System.out.print("Введите второе число: ");
-            b = scanner.nextDouble();
+            a = getValidDouble(scanner, "Введите первое число: ");
+            b = getValidDouble(scanner, "Введите второе число: ");
 
             switch (operation) {
                 case "+" -> result = a + b;
@@ -127,30 +118,39 @@ public class Main extends BaseTask {
             }
         }
 
-        String resultStr = String.valueOf(result);
         String fullOperation = switch (operation) {
             case "+", "-", "*", "/", "%" -> a + " " + operation + " " + b;
             case "abs" -> "|" + a + "|";
             case "pow" -> a + "^" + b;
-            default -> "Неопределено";
+            default -> "Неопределенно";
         };
-//
-//        String sql = "INSERT INTO expressions (result, operation) VALUES (?, ?)";
-//        try (var pstmt = sqlTools.getConnection().prepareStatement(sql)) {
-//            pstmt.setString(1, resultStr);
-//            pstmt.setString(2, fullOperation);
-//            pstmt.executeUpdate();
-//        }
 
-        System.out.printf("✅ Операция: %s = %s%n", fullOperation, resultStr);
+        this.insertRowIntoDB(
+                "expressions",
+                Map.of(
+                        "result", result,
+                        "operation", fullOperation
+                )
+        );
+        System.out.printf("✅ Операция: %s = %s%n", fullOperation, result);
     }
 
-    public void insertRowIntoDB() throws SQLException {
+    private double getValidDouble(Scanner scanner, String prompt) {
+        double value = 0;
+        boolean valid = false;
 
+        while (!valid) {
+            System.out.print(prompt);
+            String input = scanner.next();
+            try {
+                value = Double.parseDouble(input);
+                valid = true;
+            } catch (NumberFormatException e) {
+                System.out.println("Ошибка: введите корректное число (например, 12.3)");
+            }
+        }
+
+        return value;
     }
 
-    @Override
-    public void saveToExcel() {
-
-    }
 }
