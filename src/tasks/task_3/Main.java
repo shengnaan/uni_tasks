@@ -69,7 +69,7 @@ public class Main extends BaseTask {
         String[] numbers = input.split("\\s+");
 
         for (String number : numbers) {
-            boolean isInteger = false;
+            boolean isInteger;
             boolean isEven = false;
 
             try {
