@@ -62,5 +62,36 @@ public class Main extends BaseTask {
         main.sqlTools.closeConnection();
     }
 
+    public void checkNumbers() throws SQLException {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Введите числа через пробел:");
+        String input = scanner.nextLine();
+        String[] numbers = input.split("\\s+");
 
+        for (String number : numbers) {
+            boolean isInteger = false;
+            boolean isEven = false;
+
+            try {
+                double value = Double.parseDouble(number);
+                isInteger = value % 1 == 0;
+                if (isInteger) {
+                    isEven = ((int) value) % 2 == 0;
+                }
+            } catch (NumberFormatException e) {
+                System.out.printf("Ошибка: '%s' не является числом.%n", number);
+                continue;
+            }
+
+            this.insertRowIntoDB(
+                    "number_checks",
+                    Map.of(
+                            "number", number,
+                            "is_integer", isInteger,
+                            "is_even", isEven
+                    )
+            );
+            System.out.printf("Число: %s, Целое: %s, Чётное: %s%n", number, isInteger, isEven);
+        }
+    }
 }
