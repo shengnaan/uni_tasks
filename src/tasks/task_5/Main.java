@@ -87,21 +87,21 @@ public class Main extends BaseTask {
 
         String firstString;
         do {
-            System.out.println("Введите первую строку (минимальная длина - 5 символов): ");
+            System.out.println("Введите первую строку (минимальная длина - 50 символов): ");
             firstString = scanner.nextLine().trim();
-            if (firstString.length() < 5) {
-                System.out.println("Ошибка: строка должна содержать не менее 5 символов.");
+            if (firstString.length() < 50) {
+                System.out.println("Ошибка: строка должна содержать не менее 50 символов.");
             }
-        } while (firstString.length() < 5);
+        } while (firstString.length() < 50);
 
         String secondString;
         do {
-            System.out.println("Введите вторую строку (минимальная длина - 5 символов): ");
+            System.out.println("Введите вторую строку (минимальная длина - 50 символов): ");
             secondString = scanner.nextLine().trim();
-            if (secondString.length() < 5) {
-                System.out.println("Ошибка: строка должна содержать не менее 5 символов.");
+            if (secondString.length() < 50) {
+                System.out.println("Ошибка: строка должна содержать не менее 50 символов.");
             }
-        } while (secondString.length() < 5);
+        } while (secondString.length() < 50);
 
         int position = -1;
         while (true) {
