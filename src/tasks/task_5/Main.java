@@ -48,6 +48,7 @@ public class Main extends BaseTask {
                 menuPunkt = Integer.parseInt(var);
             } catch (NumberFormatException e) {
                 System.out.println("Неверный формат ввода!");
+                return;
             }
 
             switch (menuPunkt) {
