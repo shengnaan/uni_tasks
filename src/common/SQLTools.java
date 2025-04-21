@@ -167,4 +167,24 @@ public final class SQLTools {
         }
     }
 
+    public Map<String, String> getFromTable(String query) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            if (rs.next()) {
+                String str1 = rs.getString("first_string");
+                String str2 = rs.getString("second_string");
+
+                return Map.of("first_string", str1,
+                        "second_string", str2);
+            } else {
+                System.out.println("Нет данных в таблице.");
+                return Map.of();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Ошибка при подсчёте длины: " + e.getMessage());
+        }
+        return Map.of();
+    }
 }
