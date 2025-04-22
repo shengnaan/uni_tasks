@@ -4,6 +4,7 @@ import common.BaseTask;
 import common.SQLTools;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -24,7 +25,7 @@ public class Main extends BaseTask {
     }
 
     public static void main(String[] args) throws SQLException {
-        final Map<String, Map<String, String>> tableSchemas = Map.of(
+        final Map<String, Map<String, String>> TEMPLATE_SCHEMA = Map.of(
                 "strings", Map.of(
                         "id", "SERIAL PRIMARY KEY",
                         "operation", "VARCHAR(50)",
@@ -32,6 +33,33 @@ public class Main extends BaseTask {
                         "result", "VARCHAR(150)"
                 )
         );
+
+        Map<String, Map<String, String>> tableSchemas = new HashMap<>();
+        Scanner schemaScanner = new Scanner(System.in);
+
+        System.out.println("Введите название таблицы:");
+        String tableName = schemaScanner.nextLine();
+
+        Map<String, String> columns = new HashMap<>();
+        System.out.println("Введите столбцы и их типы (для завершения введите 'end'):");
+
+        while (true) {
+            System.out.print("Название столбца: ");
+            String columnName = schemaScanner.nextLine();
+            if (columnName.equals("end")) break;
+
+            System.out.print("Тип данных: ");
+            String columnType = schemaScanner.nextLine();
+            columns.put(columnName, columnType);
+        }
+
+        tableSchemas.put(tableName, columns);
+
+        if (!tableSchemas.equals(TEMPLATE_SCHEMA)) {
+            System.out.println("Некорректная структура таблицы");
+            tableSchemas = TEMPLATE_SCHEMA;
+        }
+
         final String dbName = "task_4";
         Main main = new Main(dbName, tableSchemas);
 
