@@ -76,17 +76,33 @@ public class Main extends BaseTask{
         main.sqlTools.closeConnection();
     }
 
-    public void input() {
+    public void input() throws SQLException {
         Scanner scanner = new Scanner(System.in);
+
+        if (!sqlTools.hasTables()) {
+            System.out.println("Ошибка: В базе данных нет ни одной таблицы. Сначала создайте таблицу (пункт 2 меню).");
+            return;
+        }
+
+        String tableName = getNonEmptyInput(scanner, "Введите название таблицы для сохранения результатов:");
+
+        if (!sqlTools.isTableExists(tableName)) {
+            System.out.println("Ошибка: Таблица '" + tableName + "' не существует. Сначала создайте её (пункт 2 меню).");
+            return;
+        }
+
+        String string1Column = getNonEmptyInput(scanner, "Введите название столбца для записи первой строки: ");
+        String string2Column = getNonEmptyInput(scanner, "Введите название столбца для записи второй строки: ");
+
         System.out.println("Введите первую строку: ");
         String string1 = scanner.nextLine();
         System.out.println("Введите вторую строку: ");
         String string2 = scanner.nextLine();
 
         try {
-            sqlTools.insertRowIntoDB("strings", Map.of(
-                    "first_string", string1,
-                    "second_string", string2
+            sqlTools.insertRowIntoDB(tableName, Map.of(
+                    string1Column, string1,
+                    string2Column, string2  // установить пустые значения остальных столбцов по умолчанию
             ));
         } catch (SQLException e) {
             System.out.println("Ошибка при сохранении в БД: " + e.getMessage());
@@ -147,6 +163,18 @@ public class Main extends BaseTask{
 
         sqlTools.insertRowIntoDB("strings",
                 Map.of("is_equal", isEqual));
+    }
+
+    private String getNonEmptyInput(Scanner scanner, String promptMessage) {
+        String input;
+        while (true) {
+            System.out.println(promptMessage);
+            input = scanner.nextLine().trim();
+            if (!input.isEmpty()) {
+                return input;
+            }
+            System.out.println("Ошибка: ввод не может быть пустым. Попробуйте снова.");
+        }
     }
 
 }
