@@ -4,14 +4,13 @@ import common.BaseTask;
 import common.SQLTools;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Main extends BaseTask {
 
-    public Main(String dbName, Map<String, Map<String, String>> tableSchemas, Map<String, Map<String, String>> TEMPLATE_SCHEMA) throws SQLException {
-        super(new SQLTools(dbName, tableSchemas, TEMPLATE_SCHEMA));
+    public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
+        super(new SQLTools(dbName, tableSchemas));
         menuText = """
                 1. Вывести все таблицы из БД.
                 2. Создать таблицу(-ы) в БД.
@@ -23,7 +22,7 @@ public class Main extends BaseTask {
     }
 
     public static void main(String[] args) throws SQLException {
-        final Map<String, Map<String, String>> TEMPLATE_SCHEMA = Map.of(
+        final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "number_checks", Map.of(
                         "id", "SERIAL PRIMARY KEY",
                         "number", "VARCHAR(50)",
@@ -31,9 +30,8 @@ public class Main extends BaseTask {
                         "is_even", "BOOLEAN"
                 )
         );
-        Map<String, Map<String, String>> tableSchemas = Map.of();
         final String dbName = "task_3";
-        Main main = new Main(dbName, tableSchemas, TEMPLATE_SCHEMA);
+        tasks.task_3.Main main = new tasks.task_3.Main(dbName, tableSchemas);
 
         System.out.println("Практическая работа 3");
         main.showMenu(menuText);
@@ -66,10 +64,28 @@ public class Main extends BaseTask {
 
     public void checkNumbers() throws SQLException {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Введите числа через пробел:");
-        String input = scanner.nextLine();
-        String[] numbers = input.split("\\s+");
 
+        // Проверяем наличие таблиц в БД
+        if (!sqlTools.hasTables()) {
+            System.out.println("Ошибка: В базе данных нет ни одной таблицы. Сначала создайте таблицы (пункт 2 меню).");
+            return;
+        }
+
+        // Получаем ввод с проверкой
+        String tableName = getNonEmptyInput(scanner, "Введите название таблицы для сохранения результатов:");
+
+        if (!sqlTools.isTableExists(tableName)) {
+            System.out.println("Ошибка: Таблица '" + tableName + "' не существует. Сначала создайте её (пункт 2 меню).");
+            return;
+        }
+
+        String numberColumn = getNonEmptyInput(scanner, "Введите название столбца для числа (тип VARCHAR(50)):");
+        String isIntegerColumn = getNonEmptyInput(scanner, "Введите название столбца для признака целого числа (тип BOOLEAN):");
+        String isEvenColumn = getNonEmptyInput(scanner, "Введите название столбца для признака четности (тип BOOLEAN):");
+        String numbersInput = getNonEmptyInput(scanner, "Введите числа через пробел:");
+
+        // Обработка чисел
+        String[] numbers = numbersInput.split("\\s+");
         for (String number : numbers) {
             boolean isInteger;
             boolean isEven = false;
@@ -86,14 +102,32 @@ public class Main extends BaseTask {
             }
 
             this.insertRowIntoDB(
-                    "number_checks",
+                    tableName,
                     Map.of(
-                            "number", number,
-                            "is_integer", isInteger,
-                            "is_even", isEven
+                            numberColumn, number,
+                            isIntegerColumn, isInteger,
+                            isEvenColumn, isEven
                     )
             );
             System.out.printf("Число: %s, Целое: %s, Чётное: %s%n", number, isInteger, isEven);
         }
     }
+    /**
+     * Вспомогательный метод для получения непустого ввода от пользователя
+     * @param scanner Объект Scanner для ввода
+     * @param promptMessage Сообщение с подсказкой для пользователя
+     * @return Непустая строка, введенная пользователем
+     */
+    private String getNonEmptyInput(Scanner scanner, String promptMessage) {
+        String input;
+        while (true) {
+            System.out.println(promptMessage);
+            input = scanner.nextLine().trim();
+            if (!input.isEmpty()) {
+                return input;
+            }
+            System.out.println("Ошибка: ввод не может быть пустым. Попробуйте снова.");
+        }
+    }
 }
+

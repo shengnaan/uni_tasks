@@ -28,7 +28,7 @@ public abstract class BaseTask {
         this.sqlTools.insertRowIntoDB(tablename, data);
     }
 
-    public void saveToExcel() {
+    public void saveToExcel() throws SQLException {
         this.sqlTools.saveToExcel();
     }
 

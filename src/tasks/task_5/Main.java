@@ -4,14 +4,13 @@ import common.BaseTask;
 import common.SQLTools;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Main extends BaseTask {
 
-    public Main(String dbName, Map<String, Map<String, String>> tableSchemas, Map<String, Map<String, String>> TEMPLATE_SCHEMA) throws SQLException {
-        super(new SQLTools(dbName, tableSchemas, TEMPLATE_SCHEMA));
+    public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
+        super(new SQLTools(dbName, tableSchemas));
         menuText = """
                 1. Вывести все таблицы из БД.
                 2. Создать таблицу(-ы) в БД.
@@ -24,17 +23,15 @@ public class Main extends BaseTask {
     }
 
     public static void main(String[] args) throws SQLException {
-        final Map<String, Map<String, String>> TEMPLATE_SCHEMA = Map.of(
+        final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "strings", Map.of(
                         "id", "SERIAL PRIMARY KEY",
                         "input", "VARCHAR(150)",
                         "result", "VARCHAR(150)"
                 )
         );
-
-        Map<String, Map<String, String>> tableSchemas = Map.of();
         final String dbName = "task_5";
-        Main main = new Main(dbName, tableSchemas, TEMPLATE_SCHEMA);
+        Main main = new Main(dbName, tableSchemas);
 
         System.out.println("Практическая работа 5");
         main.showMenu(menuText);

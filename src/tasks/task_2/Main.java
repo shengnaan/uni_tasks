@@ -4,14 +4,13 @@ import common.BaseTask;
 import common.SQLTools;
 
 import java.sql.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-public class Main extends BaseTask {
+public class Main extends BaseTask{
 
-    public Main(String dbName, Map<String, Map<String, String>> tableSchemas, Map<String, Map<String, String>> TEMPLATE_SCHEMA) throws SQLException {
-        super(new SQLTools(dbName, tableSchemas, TEMPLATE_SCHEMA));
+    public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
+        super(new SQLTools(dbName, tableSchemas));
         menuText = """
                 1. Вывести все таблицы из MySQL.
                 2. Создать таблицу в MySQL.
@@ -30,7 +29,7 @@ public class Main extends BaseTask {
     }
 
     public static void main(String[] args) throws SQLException {
-        final Map<String, Map<String, String>> TEMPLATE_SCHEMA = Map.of(
+        final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "strings", Map.of(
                         "id", "SERIAL PRIMARY KEY",
                         "first_string", "VARCHAR(255)",
@@ -42,11 +41,8 @@ public class Main extends BaseTask {
                 )
         );
 
-        Map<String, Map<String, String>> tableSchemas = Map.of();
-
         final String dbName = "task_2";
-        Main main = new Main(dbName, tableSchemas, TEMPLATE_SCHEMA);
-
+        Main main = new Main(dbName, tableSchemas);
         System.out.println("Практическая работа 2");
         main.showMenu(menuText);
 
@@ -141,7 +137,7 @@ public class Main extends BaseTask {
         String str2 = strings.get("second_string");
         String isEqual = "";
 
-        if (str1.equals(str2)) {
+        if (str1.equals(str2)){
             System.out.println("Строки равны.");
             isEqual = "YES";
         } else {
