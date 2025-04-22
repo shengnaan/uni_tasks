@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-public class Main extends BaseTask{
+public class Main extends BaseTask {
 
-    public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
-        super(new SQLTools(dbName, tableSchemas));
+    public Main(String dbName, Map<String, Map<String, String>> tableSchemas, Map<String, Map<String, String>> TEMPLATE_SCHEMA) throws SQLException {
+        super(new SQLTools(dbName, tableSchemas, TEMPLATE_SCHEMA));
         menuText = """
                 1. Вывести все таблицы из MySQL.
                 2. Создать таблицу в MySQL.
@@ -42,34 +42,11 @@ public class Main extends BaseTask{
                 )
         );
 
-        Map<String, Map<String, String>> tableSchemas = new HashMap<>();
-        Scanner schemaScanner = new Scanner(System.in);
-
-        System.out.println("Введите название таблицы:");
-        String tableName = schemaScanner.nextLine();
-
-        Map<String, String> columns = new HashMap<>();
-        System.out.println("Введите столбцы и их типы (для завершения введите 'end'):");
-
-        while (true) {
-            System.out.print("Название столбца: ");
-            String columnName = schemaScanner.nextLine();
-            if (columnName.equals("end")) break;
-
-            System.out.print("Тип данных: ");
-            String columnType = schemaScanner.nextLine();
-            columns.put(columnName, columnType);
-        }
-
-        tableSchemas.put(tableName, columns);
-
-        if (!tableSchemas.equals(TEMPLATE_SCHEMA)) {
-            System.out.println("Некорректная структура таблицы");
-            tableSchemas = TEMPLATE_SCHEMA;
-        }
+        Map<String, Map<String, String>> tableSchemas = Map.of();
 
         final String dbName = "task_2";
-        Main main = new Main(dbName, tableSchemas);
+        Main main = new Main(dbName, tableSchemas, TEMPLATE_SCHEMA);
+
         System.out.println("Практическая работа 2");
         main.showMenu(menuText);
 
@@ -164,7 +141,7 @@ public class Main extends BaseTask{
         String str2 = strings.get("second_string");
         String isEqual = "";
 
-        if (str1.equals(str2)){
+        if (str1.equals(str2)) {
             System.out.println("Строки равны.");
             isEqual = "YES";
         } else {

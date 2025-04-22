@@ -2,7 +2,9 @@ package common;
 
 import java.io.FileOutputStream;
 import java.sql.*;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -13,10 +15,12 @@ public final class SQLTools {
 
     private final Connection conn;
     private final Map<String, Map<String, String>> tableSchemas;
+    private final Map<String, Map<String, String>> TEMPLATE_SCHEMA;
 
-    public SQLTools(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
+    public SQLTools(String dbName, Map<String, Map<String, String>> tableSchemas, Map<String, Map<String, String>> TEMPLATE_SCHEMA) throws SQLException {
         this.conn = DriverManager.getConnection(Settings.getDatabaseUrl(dbName));
         this.tableSchemas = tableSchemas;
+        this.TEMPLATE_SCHEMA = TEMPLATE_SCHEMA;
     }
 
     public void showTables() throws SQLException {
@@ -50,6 +54,33 @@ public final class SQLTools {
     }
 
     public void createTables() throws SQLException {
+        Map<String, Map<String, String>> tableSchemas = new HashMap<>();
+        Scanner schemaScanner = new Scanner(System.in);
+
+        System.out.println("Введите название таблицы:");
+        String scTableName = schemaScanner.nextLine();
+
+        Map<String, String> scColumns = new HashMap<>();
+        System.out.println("Введите столбцы и их типы (для завершения введите 'end'):");
+
+        while (true) {
+            System.out.print("Название столбца: ");
+            String scColumnName = schemaScanner.nextLine();
+            if (scColumnName.equals("end")) break;
+
+            System.out.print("Тип данных: ");
+            String columnType = schemaScanner.nextLine();
+            scColumns.put(scColumnName, columnType);
+        }
+
+        tableSchemas.put(scTableName, scColumns);
+
+        if (!tableSchemas.equals(TEMPLATE_SCHEMA)) {
+            System.out.println("Некорректная структура таблицы");
+            return;
+        }
+        tableSchemas = TEMPLATE_SCHEMA;
+
         for (Map.Entry<String, Map<String, String>> entry : tableSchemas.entrySet()) {
             String tableName = entry.getKey();
             Map<String, String> columns = entry.getValue();
