@@ -32,12 +32,12 @@ public class Main extends BaseTask{
         final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "strings", Map.of(
                         "id", "SERIAL PRIMARY KEY",
-                        "first_string", "TEXT",
-                        "second_string", "TEXT",
-                        "length_1", "INT",
+                        "first_string", "VARCHAR(255)",
+                        "second_string", "VARCHAR(255)",
+                        "length_1", "INTEGER",
                         "length_2", "INTEGER",
                         "is_equal", "VARCHAR(3)",  // YES или NO
-                        "result", "TEXT"
+                        "result", "VARCHAR(500)"
                 )
         );
 
