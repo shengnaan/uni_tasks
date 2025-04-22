@@ -40,7 +40,7 @@ public class Main extends BaseTask {
         int menuPunkt = 0;
 
         Scanner sc = new Scanner(System.in);
-        while (!"12".equals(var)) {
+        while (!"6".equals(var)) {
             var = sc.next();
 
             try {
