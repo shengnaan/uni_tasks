@@ -25,6 +25,8 @@ public class Main extends BaseTask {
                 11. Показать меню
                 12. Остановить программу.
                 """;
+        BaseTask.tableSchemas = tableSchemas;
+
     }
 
     public static void main(String[] args) throws SQLException {
@@ -77,6 +79,10 @@ public class Main extends BaseTask {
     }
 
     public void count(String operation) throws SQLException {
+        if (!hasTables()) {
+            System.out.println("Вначале создайте таблицу!");
+            return;
+        }
         Scanner scanner = new Scanner(System.in);
         double a, b = 0;
         double result;
