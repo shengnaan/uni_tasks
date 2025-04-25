@@ -51,63 +51,30 @@ public final class SQLTools {
         }
     }
 
-    public void createTables() throws SQLException {
-        Scanner scanner = new Scanner(System.in);
+    public void createTables(Map<String, String> columns, String tableName) throws SQLException {
+        StringBuilder sb = new StringBuilder("CREATE TABLE ");
+        sb.append('"').append(tableName).append('"').append(" (");
 
-        for (Map.Entry<String, Map<String, String>> entry : tableSchemas.entrySet()) {
-            String tableName;
-            while (true) {
-                System.out.println("Введите название таблицы для схемы:");
-                tableName = scanner.nextLine().trim();
-                if (!tableName.isEmpty()) {
-                    break;
-                }
-                System.out.println("Ошибка: название таблицы не может быть пустым. Попробуйте снова.");
-            }
+        int i = 0;
+        for (Map.Entry<String, String> column : columns.entrySet()) {
+            sb.append('"').append(column.getKey()).append('"')
+                    .append(" ").append(column.getValue());
+            if (i < columns.size() - 1) sb.append(", ");
+            i++;
+        }
 
-            Map<String, String> columns = new LinkedHashMap<>();
-            int colIndex = 0;
-            for (Map.Entry<String, String> column : entry.getValue().entrySet()) {
-                String columnName;
-                while (true) {
-                    System.out.println("Введите название столбца #" + (colIndex + 1) + " (тип: " + column.getValue() + "):");
-                    columnName = scanner.nextLine().trim();
-                    if (!columnName.isEmpty()) {
-                        break;
-                    }
-                    System.out.println("Ошибка: название столбца не может быть пустым. Попробуйте снова.");
-                }
-                columns.put(columnName, column.getValue());
-                colIndex++;
-            }
+        sb.append(")");
 
-            if (!isTableExists(tableName)) {
-                StringBuilder sb = new StringBuilder("CREATE TABLE " + tableName + " (");
-
-                int i = 0;
-                for (Map.Entry<String, String> column : columns.entrySet()) {
-                    sb.append(column.getKey()).append(" ").append(column.getValue());
-                    if (i < columns.size() - 1) sb.append(", ");
-                    i++;
-                }
-
-                sb.append(")");
-
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.executeUpdate(sb.toString());
-                    System.out.println("Таблица создана: " + tableName);
-                }
-            } else {
-                System.out.println("Таблица " + tableName + " уже существует");
-            }
+        try (Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(sb.toString());
+            System.out.println("Таблица создана: " + tableName);
         }
     }
 
 
     public void insertRowIntoDB(String tablename, Map<String, Object> data) throws SQLException {
-        if (!tableSchemas.values().stream().anyMatch(schema ->
-                schema.size() == data.size() + 1)) { // +1 для учета id
-            throw new SQLException("Количество столбцов не соответствует ни одной схеме");
+        if (!isTableExists(tablename)) {
+            throw new SQLException("Не найдена схема для таблицы '" + tablename + "'");
         }
 
         if (data == null || data.isEmpty()) {
@@ -129,7 +96,6 @@ public final class SQLTools {
     }
 
 
-
     public boolean isTableExists(String tableName) throws SQLException {
         DatabaseMetaData meta = conn.getMetaData();
         try (ResultSet rs = meta.getTables(null, null, tableName, new String[]{"TABLE"})) {
@@ -140,11 +106,9 @@ public final class SQLTools {
     public void saveToExcel() throws SQLException {
         Scanner sc = new Scanner(System.in);
 
-        // Запрашиваем название таблицы для сохранения
         System.out.println("Введите название таблицы для сохранения:");
         String tableName = sc.nextLine().trim();
 
-        // Проверяем существование таблицы
         if (!isTableExists(tableName)) {
             System.out.println("Таблица '" + tableName + "' не существует!");
             return;
@@ -168,17 +132,14 @@ public final class SQLTools {
 
                 XSSFSheet sheet = workbook.createSheet(tableName);
 
-                // Заголовок с названием таблицы
                 Row titleRow = sheet.createRow(0);
                 titleRow.createCell(0).setCellValue("Таблица: " + tableName);
 
-                // Заголовки столбцов
                 Row header = sheet.createRow(1);
                 for (int i = 1; i <= columnCount; i++) {
                     header.createCell(i - 1).setCellValue(metaData.getColumnName(i));
                 }
 
-                // Данные таблицы
                 int rowIndex = 2;
                 while (rs.next()) {
                     Row row = sheet.createRow(rowIndex++);
@@ -192,7 +153,6 @@ public final class SQLTools {
                     }
                 }
 
-                // Автоподбор ширины столбцов
                 for (int i = 0; i < columnCount; i++) {
                     sheet.autoSizeColumn(i);
                 }
@@ -202,7 +162,6 @@ public final class SQLTools {
                 return;
             }
 
-            // Сохранение файла
             try (FileOutputStream fos = new FileOutputStream(fileName)) {
                 workbook.write(fos);
                 System.out.println("Таблица '" + tableName + "' успешно экспортирована в файл: " + fileName);
@@ -212,7 +171,6 @@ public final class SQLTools {
             System.err.println("Ошибка при создании Excel-файла: " + e.getMessage());
         }
     }
-
 
 
     public Map<String, String> getFromTable(String query) throws SQLException {
@@ -246,7 +204,23 @@ public final class SQLTools {
     public boolean hasTables() throws SQLException {
         DatabaseMetaData meta = conn.getMetaData();
         try (ResultSet rs = meta.getTables(null, null, "%", new String[]{"TABLE"})) {
-            return rs.next(); // Возвращает true, если есть хотя бы одна таблица
+            return rs.next();
         }
     }
+    public boolean isColumnExists(String tableName, String columnName) throws SQLException {
+    String query = """
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public'
+          AND table_name = ?
+          AND column_name = ?
+    """;
+    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        stmt.setString(1, tableName);
+        stmt.setString(2, columnName);
+        try (ResultSet rs = stmt.executeQuery()) {
+            return rs.next();
+        }
+    }
+}
 }
