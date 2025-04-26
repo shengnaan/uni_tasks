@@ -166,7 +166,7 @@ public class Main extends BaseTask{
                 Map.of("is_equal", isEqual));
     }
 
-    private String getNonEmptyInput(Scanner scanner, String promptMessage) {
+    protected String getNonEmptyInput(Scanner scanner, String promptMessage) {
         String input;
         while (true) {
             System.out.println(promptMessage);
