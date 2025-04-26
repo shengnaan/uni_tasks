@@ -105,8 +105,8 @@ public abstract class BaseTask {
         }
     }
 
-    public void insertRowIntoDB(String tablename, Map<String, Object> data) throws SQLException {
-        this.sqlTools.insertRowIntoDB(tablename, data);
+    public void insertRowIntoDB(String tableName, Map<String, Object> data) throws SQLException {
+        this.sqlTools.insertRowIntoDB(tableName, data);
     }
 
     public void saveToExcel() throws SQLException {

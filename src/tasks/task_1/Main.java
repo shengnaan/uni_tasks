@@ -4,6 +4,7 @@ import common.BaseTask;
 import common.SQLTools;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -84,6 +85,17 @@ public class Main extends BaseTask {
             return;
         }
         Scanner scanner = new Scanner(System.in);
+        TableAndColumns tableAndCols = promptTableAndColumns(
+                scanner,
+                List.of(
+                        "Введите название столбца для названия операции (тип VARCHAR(50)):",
+                        "Введите название столбца для результата (тип FlOAT/INTEGER):"
+                )
+        );
+        if (tableAndCols == null) {
+            return;
+        }
+
         double a, b = 0;
         double result;
 
@@ -130,13 +142,18 @@ public class Main extends BaseTask {
             default -> "Неопределенно";
         };
 
-        this.insertRowIntoDB(
-                "expressions",
-                Map.of(
-                        "result", result,
-                        "operation", fullOperation
-                )
+        Map<String, Object> dataLogical = Map.of(
+                "Введите название столбца для названия операции (тип VARCHAR(50)):", operation,
+                "Введите название столбца для результата (тип FlOAT/INTEGER):", result
         );
+
+        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+
+        insertRowIntoDB(
+                tableAndCols.getTableName(),
+                dataReal
+        );
+
         System.out.printf("✅ Операция: %s = %s%n", fullOperation, result);
     }
 
