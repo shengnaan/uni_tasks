@@ -106,12 +106,15 @@ public final class SQLTools {
     public void saveToExcel() throws SQLException {
         Scanner sc = new Scanner(System.in);
 
-        System.out.println("Введите название таблицы для сохранения:");
-        String tableName = sc.nextLine().trim();
-
-        if (!isTableExists(tableName)) {
-            System.out.println("Таблица '" + tableName + "' не существует!");
-            return;
+        String tableName;
+        while (true) {
+            System.out.println("Введите название таблицы для сохранения:");
+            tableName = sc.nextLine().trim();
+            if (!isTableExists(tableName)) {
+                System.out.println("Таблица '" + tableName + "' не существует! Попробуйте снова.");
+            } else {
+                break;
+            }
         }
 
         System.out.println("Введите название файла для сохранения:");
@@ -140,37 +143,53 @@ public final class SQLTools {
                     header.createCell(i - 1).setCellValue(metaData.getColumnName(i));
                 }
 
+                StringBuilder headerBuilder = new StringBuilder();
+                headerBuilder.append("|");
+                for (int i = 1; i <= columnCount; i++) {
+                    headerBuilder.append(" ")
+                             .append(metaData.getColumnName(i))
+                             .append(" |");
+                }
+                System.out.println(headerBuilder);
+
                 int rowIndex = 2;
                 while (rs.next()) {
                     Row row = sheet.createRow(rowIndex++);
+                    StringBuilder rowBuilder = new StringBuilder();
+                    rowBuilder.append("|");
+
                     for (int i = 1; i <= columnCount; i++) {
                         Object value = rs.getObject(i);
-                        if (value != null) {
-                            row.createCell(i - 1).setCellValue(value.toString());
-                        } else {
-                            row.createCell(i - 1).setCellValue("");
-                        }
-                    }
+                        
+                        String cellValue = (value != null) ? value.toString() : "";
+                        row.createCell(i - 1).setCellValue(cellValue);
+
+                        rowBuilder.append(" ")
+                              .append(cellValue)
+                              .append(" |");
                 }
 
-                for (int i = 0; i < columnCount; i++) {
-                    sheet.autoSizeColumn(i);
-                }
-
-            } catch (SQLException e) {
-                System.out.println("Ошибка при экспорте таблицы " + tableName + ": " + e.getMessage());
-                return;
+                System.out.println(rowBuilder);
             }
 
-            try (FileOutputStream fos = new FileOutputStream(fileName)) {
-                workbook.write(fos);
-                System.out.println("Таблица '" + tableName + "' успешно экспортирована в файл: " + fileName);
+            for (int i = 0; i < columnCount; i++) {
+                sheet.autoSizeColumn(i);
             }
 
-        } catch (Exception e) {
-            System.err.println("Ошибка при создании Excel-файла: " + e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("Ошибка при экспорте таблицы " + tableName + ": " + e.getMessage());
+            return;
         }
+
+        try (FileOutputStream fos = new FileOutputStream(fileName)) {
+            workbook.write(fos);
+            System.out.println("Таблица '" + tableName + "' успешно экспортирована в файл: " + fileName);
+        }
+
+    } catch (Exception e) {
+        System.err.println("Ошибка при создании Excel-файла: " + e.getMessage());
     }
+}
 
 
     public Map<String, String> getFromTable(String query) throws SQLException {
@@ -207,20 +226,55 @@ public final class SQLTools {
             return rs.next();
         }
     }
+
     public boolean isColumnExists(String tableName, String columnName) throws SQLException {
-    String query = """
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_schema = 'public'
-          AND table_name = ?
-          AND column_name = ?
-    """;
-    try (PreparedStatement stmt = conn.prepareStatement(query)) {
-        stmt.setString(1, tableName);
-        stmt.setString(2, columnName);
-        try (ResultSet rs = stmt.executeQuery()) {
-            return rs.next();
+        String query = """
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_schema = 'public'
+                      AND table_name = ?
+                      AND column_name = ?
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, columnName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
         }
     }
-}
+
+    public String getColumnType(String tableName, String columnName) throws SQLException {
+        // Предположим, что у нас есть свойство connection типа java.sql.Connection
+        // и что в конструкторе SQLTools это соединение уже устанавливается
+        DatabaseMetaData metaData = conn.getMetaData();
+
+        // В некоторых СУБД имя таблиц и столбцов может формироваться в разном регистре;
+        // часто имеет смысл привести их к верхнему/нижнему регистру.
+        try (ResultSet columns = metaData.getColumns(null, null, tableName, columnName)) {
+            if (columns.next()) {
+                // Получаем тип из метаданных. Поле "TYPE_NAME" содержит наименование типа
+                // (например, "VARCHAR", "INT", "FLOAT", "CHAR" и т. д.)
+                String typeName = columns.getString("TYPE_NAME");
+                int size = columns.getInt("COLUMN_SIZE");
+
+                // Если это строковый тип, обычно имеет смысл отобразить и размер в формате "VARCHAR(255)"
+                // В реальной БД могут встречаться нюансы: например, "TEXT" не всегда имеет size.
+                // Ниже — упрощённый пример формирования итоговой строки.
+                if (typeName != null) {
+                    typeName = typeName.trim().toUpperCase();
+                    // Если это разновидность строкового типа, добавим размеры
+                    if (typeName.contains("CHAR")) {
+                        return typeName + "(" + size + ")";
+                    } else {
+                        // Возвращаем просто тип, например "INTEGER", "FLOAT"
+                        return typeName;
+                    }
+                }
+            }
+        }
+
+        // Если в метаданных нет информации (или не нашли столбец), вернём null или бросим исключение
+        return null;
+    }
 }
