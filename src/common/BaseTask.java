@@ -1,5 +1,6 @@
 package common;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -217,5 +218,4 @@ public abstract class BaseTask {
     public void closeConnection() throws SQLException {
         this.sqlTools.closeConnection();
     }
-
 }

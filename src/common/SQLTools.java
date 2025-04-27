@@ -2,9 +2,7 @@ package common;
 
 import java.io.FileOutputStream;
 import java.sql.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -192,27 +190,6 @@ public final class SQLTools {
 }
 
 
-    public Map<String, String> getFromTable(String query) throws SQLException {
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            if (rs.next()) {
-                String str1 = rs.getString("first_string");
-                String str2 = rs.getString("second_string");
-
-                return Map.of("first_string", str1,
-                        "second_string", str2);
-            } else {
-                System.out.println("Нет данных в таблице.");
-                return Map.of();
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Ошибка при подсчёте длины: " + e.getMessage());
-        }
-        return Map.of();
-    }
-
     public void closeConnection() throws SQLException {
         if (conn != null && !conn.isClosed()) {
             conn.close();
@@ -277,4 +254,39 @@ public final class SQLTools {
         // Если в метаданных нет информации (или не нашли столбец), вернём null или бросим исключение
         return null;
     }
+
+    public long getLastInsertedId(String tableName) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT MAX(id) FROM " + tableName)) {
+            if (rs.next()) {
+                return rs.getLong(1);
+            } else {
+                throw new SQLException("Не удалось получить последний ID");
+            }
+        }
+    }
+
+    public void updateRowInDB(String tableName, Map<String, Object> data, long id) throws SQLException {
+        StringBuilder query = new StringBuilder("UPDATE " + tableName + " SET ");
+        List<String> assignments = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
+
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            assignments.add(entry.getKey() + " = ?");
+            values.add(entry.getValue());
+        }
+
+        query.append(String.join(", ", assignments));
+        query.append(" WHERE id = ?");
+
+        values.add(id);
+
+        try (PreparedStatement stmt = conn.prepareStatement(query.toString())) {
+            for (int i = 0; i < values.size(); i++) {
+                stmt.setObject(i + 1, values.get(i));
+            }
+            stmt.executeUpdate();
+        }
+    }
+
 }
