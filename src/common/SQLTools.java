@@ -145,8 +145,8 @@ public final class SQLTools {
                 headerBuilder.append("|");
                 for (int i = 1; i <= columnCount; i++) {
                     headerBuilder.append(" ")
-                             .append(metaData.getColumnName(i))
-                             .append(" |");
+                            .append(metaData.getColumnName(i))
+                            .append(" |");
                 }
                 System.out.println(headerBuilder);
 
@@ -158,36 +158,36 @@ public final class SQLTools {
 
                     for (int i = 1; i <= columnCount; i++) {
                         Object value = rs.getObject(i);
-                        
+
                         String cellValue = (value != null) ? value.toString() : "";
                         row.createCell(i - 1).setCellValue(cellValue);
 
                         rowBuilder.append(" ")
-                              .append(cellValue)
-                              .append(" |");
+                                .append(cellValue)
+                                .append(" |");
+                    }
+
+                    System.out.println(rowBuilder);
                 }
 
-                System.out.println(rowBuilder);
+                for (int i = 0; i < columnCount; i++) {
+                    sheet.autoSizeColumn(i);
+                }
+
+            } catch (SQLException e) {
+                System.out.println("Ошибка при экспорте таблицы " + tableName + ": " + e.getMessage());
+                return;
             }
 
-            for (int i = 0; i < columnCount; i++) {
-                sheet.autoSizeColumn(i);
+            try (FileOutputStream fos = new FileOutputStream(fileName)) {
+                workbook.write(fos);
+                System.out.println("Таблица '" + tableName + "' успешно экспортирована в файл: " + fileName);
             }
 
-        } catch (SQLException e) {
-            System.out.println("Ошибка при экспорте таблицы " + tableName + ": " + e.getMessage());
-            return;
+        } catch (Exception e) {
+            System.err.println("Ошибка при создании Excel-файла: " + e.getMessage());
         }
-
-        try (FileOutputStream fos = new FileOutputStream(fileName)) {
-            workbook.write(fos);
-            System.out.println("Таблица '" + tableName + "' успешно экспортирована в файл: " + fileName);
-        }
-
-    } catch (Exception e) {
-        System.err.println("Ошибка при создании Excel-файла: " + e.getMessage());
     }
-}
 
 
     public void closeConnection() throws SQLException {
@@ -255,9 +255,11 @@ public final class SQLTools {
         return null;
     }
 
-    public long getLastInsertedId(String tableName) throws SQLException {
+    public long getLastInsertedId(String tableName, String columnName) throws SQLException {
+        String sql = "SELECT MAX(" + columnName + ") FROM " + tableName;
         try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT MAX(id) FROM " + tableName)) {
+             ResultSet rs = stmt.executeQuery(sql)) {
+
             if (rs.next()) {
                 return rs.getLong(1);
             } else {
@@ -277,7 +279,8 @@ public final class SQLTools {
         }
 
         query.append(String.join(", ", assignments));
-        query.append(" WHERE id = ?");
+        String serialColumn = findSerialColumn(tableName);
+        query.append(" WHERE ").append(serialColumn).append(" = ?");
 
         values.add(id);
 
@@ -289,4 +292,30 @@ public final class SQLTools {
         }
     }
 
+    public String findSerialColumn(String tableName) throws SQLException {
+        final String query = """
+                    SELECT column_name,
+                           data_type,
+                           column_default
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = ?
+                    ORDER BY ordinal_position
+                """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, tableName);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String columnName = rs.getString("column_name");
+                    String columnDefault = rs.getString("column_default");
+                    if (columnDefault != null && columnDefault.toLowerCase().startsWith("nextval(")) {
+                        return columnName;
+                    }
+                }
+            }
+        }
+        throw new SQLException("Не удалось найти столбец SERIAL для таблицы " + tableName);
+    }
 }

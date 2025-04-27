@@ -215,6 +215,10 @@ public abstract class BaseTask {
         }
     }
 
+    public String getSerialColumn(String tableName) throws SQLException {
+        return sqlTools.findSerialColumn(tableName);
+    }
+
     public void closeConnection() throws SQLException {
         this.sqlTools.closeConnection();
     }
