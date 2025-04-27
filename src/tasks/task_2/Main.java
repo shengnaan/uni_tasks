@@ -37,7 +37,7 @@ public class Main extends BaseTask{
     public static void main(String[] args) throws SQLException {
         final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "strings", Map.of(
-                        "id", "SERIAL PRIMARY KEY",
+                        "id", "SERIAL",
                         "first_string", "VARCHAR(255)",
                         "second_string", "VARCHAR(255)",
                         "length_1", "INT4",
@@ -116,13 +116,14 @@ public class Main extends BaseTask{
         );
 
         Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+        String table = tableAndCols.getTableName();
 
         insertRowIntoDB(
-                tableAndCols.getTableName(),
+                table,
                 dataReal
         );
 
-        lastInsertedId = sqlTools.getLastInsertedId(tableAndCols.getTableName());
+        lastInsertedId = sqlTools.getLastInsertedId(table, sqlTools.findSerialColumn(table));
 
         System.out.println("Первая строка: " + string1 + ", Вторая строка: " + string2);
     }
