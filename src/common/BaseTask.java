@@ -1,6 +1,5 @@
 package common;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -217,6 +216,10 @@ public abstract class BaseTask {
 
     public String getSerialColumn(String tableName) throws SQLException {
         return sqlTools.findSerialColumn(tableName);
+    }
+
+    public void updateRowInDB(String tableName, Map<String, Object> data, long id) throws SQLException {
+        this.sqlTools.updateRowInDB(tableName, data, id);
     }
 
     public void closeConnection() throws SQLException {
