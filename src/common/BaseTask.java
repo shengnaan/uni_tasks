@@ -5,7 +5,7 @@ import java.util.*;
 
 public abstract class BaseTask {
     protected SQLTools sqlTools;
-    protected static String menuText = "";
+    protected static String menuText;
     protected static Map<String, Map<String, String>> tableSchemas;
 
     public BaseTask(SQLTools sqlTools) throws SQLException {
@@ -156,5 +156,8 @@ public abstract class BaseTask {
         }
     }
 
+    public void closeConnection() throws SQLException {
+        this.sqlTools.closeConnection();
+    }
 
 }
