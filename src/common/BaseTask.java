@@ -122,27 +122,85 @@ public abstract class BaseTask {
             List<String> columnsPrompts
     ) throws SQLException {
 
-        String tableName = getNonEmptyInput(scanner, "Введите название таблицы для сохранения результатов:");
-        if (!sqlTools.isTableExists(tableName)) {
-            System.out.println("Ошибка: таблица '" + tableName + "' не существует.");
-            return null;
+        String tableName;
+        while (true) {
+            tableName = getNonEmptyInput(scanner, "Введите название таблицы для сохранения результатов:");
+            if (!sqlTools.isTableExists(tableName)) {
+                System.out.println("Ошибка: таблица '" + tableName + "' не существует. Попробуйте снова.");
+            } else {
+                break;
+            }
         }
 
         Map<String, String> columnMapping = new LinkedHashMap<>();
+
         for (String prompt : columnsPrompts) {
-            String userColumn;
+            String expectedType = extractTypeFromPrompt(prompt);
+
             while (true) {
-                userColumn = getNonEmptyInput(scanner, prompt);
+                String userColumn = getNonEmptyInput(scanner, prompt);
+
                 if (!sqlTools.isColumnExists(tableName, userColumn)) {
                     System.out.println("Ошибка: в таблице '" + tableName + "' нет столбца '" + userColumn + "'. Попробуйте снова.");
-                } else {
-                    break;
+                    continue;
                 }
+
+                if (columnMapping.containsValue(userColumn)) {
+                    System.out.println("Ошибка: столбец '" + userColumn + "' уже выбран для одного из предыдущих значений. Попробуйте снова.");
+                    continue;
+                }
+
+                String realTypeFromDB = sqlTools.getColumnType(tableName, userColumn);
+
+                if (expectedType != null && !isTypeMatch(realTypeFromDB, expectedType)) {
+                    System.out.printf("Ошибка: столбец '%s' имеет тип '%s', а ожидается '%s'. Попробуйте снова.%n",
+                            userColumn, realTypeFromDB, expectedType);
+                    continue;
+                }
+
+                columnMapping.put(prompt, userColumn);
+                break;
             }
-            columnMapping.put(prompt, userColumn);
         }
 
         return new TableAndColumns(tableName, columnMapping);
+    }
+
+    private String extractTypeFromPrompt(String prompt) {
+        String marker = "(тип ";
+        int start = prompt.indexOf(marker);
+        if (start == -1) {
+            return null;
+        }
+        start += marker.length();
+
+        int bracketLevel = 0;
+        int end = -1;
+
+        for (int i = start; i < prompt.length(); i++) {
+            char c = prompt.charAt(i);
+            if (c == '(') {
+                bracketLevel++;
+            } else if (c == ')') {
+                if (bracketLevel == 0) {
+                    end = i;
+                    break;
+                } else {
+                    bracketLevel--;
+                }
+            }
+        }
+
+        if (end == -1) {
+            return null;
+        }
+
+        return prompt.substring(start, end).trim();
+    }
+
+    private boolean isTypeMatch(String realType, String expectedType) {
+        if (realType == null) return false;
+        return realType.trim().equalsIgnoreCase(expectedType.trim());
     }
 
     protected String getNonEmptyInput(Scanner scanner, String promptMessage) {
