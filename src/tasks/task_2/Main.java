@@ -31,13 +31,12 @@ public class Main extends BaseTask{
     public static void main(String[] args) throws SQLException {
         final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "strings", Map.of(
-                        "id", "SERIAL PRIMARY KEY",
                         "first_string", "VARCHAR(255)",
                         "second_string", "VARCHAR(255)",
                         "length_1", "INTEGER",
                         "length_2", "INTEGER",
-                        "is_equal", "VARCHAR(3)",  // YES или NO
-                        "result", "VARCHAR(500)"
+                        "is_equal", "VARCHAR(3)",
+                        "result", "VARCHAR(510)"
                 )
         );
 
@@ -74,7 +73,7 @@ public class Main extends BaseTask{
                 default -> System.out.println("Неверная опция");
             }
         }
-        main.sqlTools.closeConnection();
+        main.closeConnection();
     }
 
     public void input() throws SQLException {

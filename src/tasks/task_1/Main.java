@@ -35,7 +35,7 @@ public class Main extends BaseTask {
                 "expressions", Map.of(
                         "id", "SERIAL PRIMARY KEY",
                         "result", "FLOAT",
-                        "operation", "VARCHAR(50)"
+                        "operation", "VARCHAR(255)"
                 )
         );
         final String dbName = "task_1";
@@ -75,8 +75,7 @@ public class Main extends BaseTask {
                 default -> System.out.println("Неверная опция");
             }
         }
-        main.sqlTools.closeConnection();
-
+        main.closeConnection();
     }
 
     public void count(String operation) throws SQLException {

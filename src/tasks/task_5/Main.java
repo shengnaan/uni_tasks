@@ -62,7 +62,7 @@ public class Main extends BaseTask {
                 default -> System.out.println("Неверная опция");
             }
         }
-        main.sqlTools.closeConnection();
+        main.closeConnection();
     }
 
     public void reverseString() throws SQLException {

@@ -26,10 +26,9 @@ public class Main extends BaseTask {
     public static void main(String[] args) throws SQLException {
         final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "strings", Map.of(
-                        "id", "SERIAL PRIMARY KEY",
-                        "operation", "VARCHAR(50)",
-                        "input", "VARCHAR(150)",
-                        "result", "VARCHAR(150)"
+                        "operation", "VARCHAR(255)",
+                        "input", "VARCHAR(255)",
+                        "result", "VARCHAR(255)"
                 )
         );
         final String dbName = "task_4";
@@ -65,8 +64,7 @@ public class Main extends BaseTask {
                 default -> System.out.println("Неверная опция");
             }
         }
-        main.sqlTools.closeConnection();
-
+        main.closeConnection();
     }
 
     public void substringByIndex() {
