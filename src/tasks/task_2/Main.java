@@ -4,6 +4,7 @@ import common.BaseTask;
 import common.SQLTools;
 
 import java.sql.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -26,22 +27,29 @@ public class Main extends BaseTask{
                 8. Показать меню.
                 9. Остановить программу.
                 """;
+        BaseTask.tableSchemas = tableSchemas;
     }
+
+    private static String lastString1 = "";
+    private static String lastString2 = "";
+    private static long lastInsertedId = -1;
 
     public static void main(String[] args) throws SQLException {
         final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "strings", Map.of(
+                        "id", "SERIAL PRIMARY KEY",
                         "first_string", "VARCHAR(255)",
                         "second_string", "VARCHAR(255)",
-                        "length_1", "INTEGER",
-                        "length_2", "INTEGER",
-                        "is_equal", "VARCHAR(3)",
+                        "length_1", "INT4",
+                        "length_2", "INT4",
+                        "is_equal", "BOOL",
                         "result", "VARCHAR(510)"
                 )
         );
 
         final String dbName = "task_2";
         Main main = new Main(dbName, tableSchemas);
+
         System.out.println("Практическая работа 2");
         main.showMenu(menuText);
 
@@ -77,92 +85,154 @@ public class Main extends BaseTask{
     }
 
     public void input() throws SQLException {
-        Scanner scanner = new Scanner(System.in);
 
         if (!sqlTools.hasTables()) {
             System.out.println("Ошибка: В базе данных нет ни одной таблицы. Сначала создайте таблицу (пункт 2 меню).");
             return;
         }
 
-        String tableName = getNonEmptyInput(scanner, "Введите название таблицы для сохранения результатов:");
+        Scanner scanner = new Scanner(System.in);
+        TableAndColumns tableAndCols = promptTableAndColumns(
+                scanner,
+                List.of(
+                        "Введите название столбца для хранения первой строки (тип VARCHAR(255)): ",
+                        "Введите название столбца для хранения второй строки (тип VARCHAR(255)): "
+                )
+        );
 
-        if (!sqlTools.isTableExists(tableName)) {
-            System.out.println("Ошибка: Таблица '" + tableName + "' не существует. Сначала создайте её (пункт 2 меню).");
+        if (tableAndCols == null) {
             return;
         }
 
-        String string1Column = getNonEmptyInput(scanner, "Введите название столбца для записи первой строки: ");
-        String string2Column = getNonEmptyInput(scanner, "Введите название столбца для записи второй строки: ");
+        String string1 = getNonEmptyInput(scanner, "Введите первую строку: ");
+        String string2 = getNonEmptyInput(scanner, "Введите вторую строку: ");
 
-        System.out.println("Введите первую строку: ");
-        String string1 = scanner.nextLine();
-        System.out.println("Введите вторую строку: ");
-        String string2 = scanner.nextLine();
+        lastString1 = string1;
+        lastString2 = string2;
 
-        try {
-            sqlTools.insertRowIntoDB(tableName, Map.of(
-                    string1Column, string1,
-                    string2Column, string2  // установить пустые значения остальных столбцов по умолчанию
-            ));
-        } catch (SQLException e) {
-            System.out.println("Ошибка при сохранении в БД: " + e.getMessage());
-        }
+        Map<String, Object> dataLogical = Map.of(
+                "Введите название столбца для хранения первой строки (тип VARCHAR(255)): ", string1,
+                "Введите название столбца для хранения второй строки (тип VARCHAR(255)): ", string2
+        );
+
+        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+
+        insertRowIntoDB(
+                tableAndCols.getTableName(),
+                dataReal
+        );
+
+        lastInsertedId = sqlTools.getLastInsertedId(tableAndCols.getTableName());
+
+        System.out.println("Первая строка: " + string1 + ", Вторая строка: " + string2);
     }
 
     public void countLength() throws SQLException {
-        String query = "SELECT first_string, second_string FROM strings ORDER BY id DESC LIMIT 1";
-        Map<String, String> strings = sqlTools.getFromTable(query);
+        if (lastString1.isEmpty() || lastString2.isEmpty()) {
+            System.out.println("Ошибка: строки еще не введены. Сначала выполните пункт 3 меню.");
+            return;
+        }
+        Scanner scanner = new Scanner(System.in);
+        TableAndColumns tableAndCols = promptTableAndColumns(
+                scanner,
+                List.of(
+                        "Введите название столбца для хранения длины первой строки (тип INT4): ",
+                        "Введите название столбца для хранения длины второй строки (тип INT4): "
+                )
+        );
 
-        String str1 = strings.get("first_string");
-        String str2 = strings.get("second_string");
+        if (tableAndCols == null) {
+            return;
+        }
 
-        int len1 = str1.length();
-        int len2 = str2.length();
+        int len1 = lastString1.length();
+        int len2 = lastString2.length();
 
-        sqlTools.insertRowIntoDB("strings", Map.of(
-                "length_1", len1,
-                "length_2", len2
-        ));
+        Map<String, Object> dataLogical = Map.of(
+                "Введите название столбца для хранения длины первой строки (тип INT4): ", len1,
+                "Введите название столбца для хранения длины второй строки (тип INT4): ", len2
+        );
+
+        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+
+        sqlTools.updateRowInDB(
+                tableAndCols.getTableName(),
+                dataReal,
+                lastInsertedId
+        );
+
 
         System.out.printf("Длина строк: %d и %d%n", len1, len2);
     }
 
     public void concatStrings() throws SQLException {
-        String query = "SELECT first_string, second_string FROM strings ORDER BY id DESC LIMIT 1";
-        Map<String, String> strings = sqlTools.getFromTable(query);
-
-        String str1 = strings.get("first_string");
-        String str2 = strings.get("second_string");
-        String str3 = str1.concat(str2);
-
-        try {
-            sqlTools.insertRowIntoDB("strings", Map.of(
-                    "result", str3
-            ));
-            System.out.println("Результат объединения строк: " + str3);
-        } catch (SQLException e) {
-            System.out.println("Ошибка при сохранении в БД: " + e.getMessage());
+        if (lastString1.isEmpty() || lastString2.isEmpty()) {
+            System.out.println("Ошибка: строки еще не введены. Сначала выполните пункт 3 меню.");
+            return;
         }
+        Scanner scanner = new Scanner(System.in);
+        TableAndColumns tableAndCols = promptTableAndColumns(
+                scanner,
+                List.of(
+                        "Введите название столбца для хранения результата объединения строк (тип VARCHAR(510)): "
+                )
+        );
+
+        if (tableAndCols == null) {
+            return;
+        }
+
+        String concat_result = lastString1.concat(lastString2);
+
+        Map<String, Object> dataLogical = Map.of(
+                "Введите название столбца для хранения результата объединения строк (тип VARCHAR(510)): ", concat_result
+        );
+
+        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+
+        sqlTools.updateRowInDB(
+                tableAndCols.getTableName(),
+                dataReal,
+                lastInsertedId
+        );
+
+        System.out.printf("Результат объединения строк %s и %s: %s%n", lastString1, lastString2, concat_result);
     }
 
     public void compareStrings() throws SQLException {
-        String query = "SELECT first_string, second_string FROM strings ORDER BY id DESC LIMIT 1";
-        Map<String, String> strings = sqlTools.getFromTable(query);
+        if (lastString1.isEmpty() || lastString2.isEmpty()) {
+            System.out.println("Ошибка: строки еще не введены. Сначала выполните пункт 3 меню.");
+            return;
+        }
+        Scanner scanner = new Scanner(System.in);
+        TableAndColumns tableAndCols = promptTableAndColumns(
+                scanner,
+                List.of(
+                        "Введите название столбца для хранения результата сравнения строк (тип BOOL): "
+                )
+        );
 
-        String str1 = strings.get("first_string");
-        String str2 = strings.get("second_string");
-        String isEqual = "";
-
-        if (str1.equals(str2)){
-            System.out.println("Строки равны.");
-            isEqual = "YES";
-        } else {
-            System.out.println("Строки не равны.");
-            isEqual = "NO";
+        if (tableAndCols == null) {
+            return;
         }
 
-        sqlTools.insertRowIntoDB("strings",
-                Map.of("is_equal", isEqual));
+        boolean flag;
+
+        flag = lastString1.equals(lastString2);
+
+        Map<String, Object> dataLogical = Map.of(
+                "Введите название столбца для хранения результата сравнения строк (тип BOOL): ", flag
+        );
+
+        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+
+        sqlTools.updateRowInDB(
+                tableAndCols.getTableName(),
+                dataReal,
+                lastInsertedId
+        );
+
+        System.out.println("Строки равны? Ответ: " + flag);
     }
 
     protected String getNonEmptyInput(Scanner scanner, String promptMessage) {
