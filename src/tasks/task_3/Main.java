@@ -74,9 +74,9 @@ public class Main extends BaseTask {
         TableAndColumns tableAndCols = promptTableAndColumns(
                 scanner,
                 List.of(
-                    "Введите название столбца для числа (тип VARCHAR(50)):",
-                    "Введите название столбца для признака целого числа (тип BOOLEAN):",
-                    "Введите название столбца для признака четности (тип BOOLEAN):"
+                    "Введите название столбца для числа (тип VARCHAR(255)):",
+                    "Введите название столбца для признака целого числа (тип BOOL):",
+                    "Введите название столбца для признака четности (тип BOOL):"
                 )
         );
         if (tableAndCols == null) {
@@ -102,9 +102,9 @@ public class Main extends BaseTask {
             }
 
             Map<String, Object> dataLogical = Map.of(
-                    "Введите название столбца для числа (тип VARCHAR(50)):", number,
-                    "Введите название столбца для признака целого числа (тип BOOLEAN):", isInteger,
-                    "Введите название столбца для признака четности (тип BOOLEAN):", isEven
+                    "Введите название столбца для числа (тип VARCHAR(255)):", number,
+                    "Введите название столбца для признака целого числа (тип BOOL):", isInteger,
+                    "Введите название столбца для признака четности (тип BOOL):", isEven
             );
 
             Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
