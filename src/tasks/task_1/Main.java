@@ -33,8 +33,8 @@ public class Main extends BaseTask {
     public static void main(String[] args) throws SQLException {
         final Map<String, Map<String, String>> tableSchemas = Map.of(
                 "expressions", Map.of(
-                        "id", "SERIAL PRIMARY KEY",
-                        "result", "FLOAT",
+                        "id", "SERIAL",
+                        "result", "FLOAT8",
                         "operation", "VARCHAR(255)"
                 )
         );
@@ -87,8 +87,8 @@ public class Main extends BaseTask {
         TableAndColumns tableAndCols = promptTableAndColumns(
                 scanner,
                 List.of(
-                        "Введите название столбца для названия операции (тип VARCHAR(50)):",
-                        "Введите название столбца для результата (тип FlOAT/INTEGER):"
+                        "Введите название столбца для названия операции (тип VARCHAR(255)):",
+                        "Введите название столбца для результата (тип FlOAT8):"
                 )
         );
         if (tableAndCols == null) {
@@ -142,8 +142,8 @@ public class Main extends BaseTask {
         };
 
         Map<String, Object> dataLogical = Map.of(
-                "Введите название столбца для названия операции (тип VARCHAR(50)):", operation,
-                "Введите название столбца для результата (тип FlOAT/INTEGER):", result
+                "Введите название столбца для названия операции (тип VARCHAR(255)):", operation,
+                "Введите название столбца для результата (тип FlOAT8):", result
         );
 
         Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
