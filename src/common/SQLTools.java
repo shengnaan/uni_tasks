@@ -8,11 +8,14 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import static common.BaseTask.menuText;
+
 
 public final class SQLTools {
 
     private final Connection conn;
     private final Map<String, Map<String, String>> tableSchemas;
+    private static final String exitCommand = "0";
 
     public SQLTools(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
         this.conn = DriverManager.getConnection(Settings.getDatabaseUrl(dbName));
@@ -107,8 +110,12 @@ public final class SQLTools {
 
         String tableName;
         while (true) {
-            System.out.println("Введите название таблицы для сохранения:");
+            System.out.println("Введите название таблицы для сохранения (или 0 для выхода в меню):");
             tableName = sc.nextLine().trim();
+            if (shouldExitToMenu(tableName)) {
+                System.out.println("Вы вернулись в главное меню!");
+                return;
+            }
             if (!isTableExists(tableName)) {
                 System.out.println("Таблица '" + tableName + "' не существует! Попробуйте снова.");
             } else {
@@ -318,5 +325,8 @@ public final class SQLTools {
             }
         }
         throw new SQLException("Не удалось найти столбец SERIAL для таблицы " + tableName);
+    }
+    private boolean shouldExitToMenu(String input) {
+        return exitCommand.equals(input.trim());
     }
 }

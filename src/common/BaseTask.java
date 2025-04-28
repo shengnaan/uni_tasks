@@ -7,6 +7,7 @@ public abstract class BaseTask {
     protected SQLTools sqlTools;
     protected static String menuText;
     protected static Map<String, Map<String, String>> tableSchemas;
+    protected static final String exitCommand = "0";
 
     public BaseTask(SQLTools sqlTools) throws SQLException {
         this.sqlTools = sqlTools;
@@ -58,7 +59,10 @@ public abstract class BaseTask {
             while (true) {
                 System.out.println("Введите название таблицы для схемы (только латинские буквы, цифры и знак подчеркивания):");
                 tableName = scanner.nextLine().trim();
-
+                if (shouldExitToMenu(tableName)) {
+                    showMenu(menuText);
+                    return;
+                }
                 if (sqlTools.isTableExists(tableName)) {
                     System.out.println("Таблица с таким именем уже существует.");
                     return;
@@ -74,7 +78,7 @@ public abstract class BaseTask {
                 System.out.println("Ошибка: недопустимое название таблицы. Название должно:\n" +
                         "- Начинаться с буквы\n" +
                         "- Содержать только буквы, цифры и знак подчеркивания\n" +
-                        "Попробуйте снова.");
+                        "Попробуйте снова или нажмите 0 для выхода в главное меню.");
             }
 
             Map<String, String> columns = new LinkedHashMap<>();
@@ -84,6 +88,10 @@ public abstract class BaseTask {
                 while (true) {
                     System.out.println("Введите название столбца #" + (colIndex + 1) + " (тип: " + column.getValue() + "):");
                     columnName = scanner.nextLine().trim();
+                    if (shouldExitToMenu(columnName)) {
+                        showMenu(menuText);
+                        return;
+                    }
                     if (columnName.matches("^[a-zA-Z][a-zA-Z0-9_]*$") && columnName.length() <= 63) {
                         if (!columns.containsKey(columnName)) {
                             break;
@@ -95,7 +103,7 @@ public abstract class BaseTask {
                             "- Начинаться с буквы\n" +
                             "- Содержать только буквы, цифры и знак подчеркивания\n" +
                             "- Быть не длиннее 63 символов\n" +
-                            "Попробуйте снова.");
+                            "Попробуйте снова или нажмите 0 для выхода в главное меню.");
                 }
                 columns.put(columnName, column.getValue());
                 colIndex++;
@@ -124,9 +132,13 @@ public abstract class BaseTask {
 
         String tableName;
         while (true) {
-            tableName = getNonEmptyInput(scanner, "Введите название таблицы для сохранения результатов:");
+            tableName = getNonEmptyInput(scanner, "Введите название таблицы для сохранения результатов: ");
+            if (shouldExitToMenu(tableName)) {
+                showMenu(menuText);
+                return null;
+            }
             if (!sqlTools.isTableExists(tableName)) {
-                System.out.println("Ошибка: таблица '" + tableName + "' не существует. Попробуйте снова.");
+                System.out.println("Ошибка: таблица '" + tableName + "' не существует. Попробуйте снова или нажмите 0 для выхода в главное меню.");
             } else {
                 break;
             }
@@ -139,14 +151,17 @@ public abstract class BaseTask {
 
             while (true) {
                 String userColumn = getNonEmptyInput(scanner, prompt);
-
+                if (shouldExitToMenu(userColumn)) {
+                    showMenu(menuText);
+                    return null;
+                }
                 if (!sqlTools.isColumnExists(tableName, userColumn)) {
-                    System.out.println("Ошибка: в таблице '" + tableName + "' нет столбца '" + userColumn + "'. Попробуйте снова.");
+                    System.out.println("Ошибка: в таблице '" + tableName + "' нет столбца '" + userColumn + "'. Попробуйте снова или нажмите 0 для выхода в главное меню.");
                     continue;
                 }
 
                 if (columnMapping.containsValue(userColumn)) {
-                    System.out.println("Ошибка: столбец '" + userColumn + "' уже выбран для одного из предыдущих значений. Попробуйте снова.");
+                    System.out.println("Ошибка: столбец '" + userColumn + "' уже выбран для одного из предыдущих значений. Попробуйте снова или нажмите 0 для выхода в главное меню.");
                     continue;
                 }
 
@@ -224,5 +239,9 @@ public abstract class BaseTask {
 
     public void closeConnection() throws SQLException {
         this.sqlTools.closeConnection();
+    }
+
+    private boolean shouldExitToMenu(String input) {
+        return exitCommand.equals(input.trim());
     }
 }
