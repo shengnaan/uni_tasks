@@ -33,8 +33,9 @@ public class Main extends BaseTask {
                 "strings", Map.of(
                         "id", "SERIAL",
                         "operation", "VARCHAR(255)",
-                        "input", "VARCHAR(510)",
-                        "result", "VARCHAR(510)"
+                        "first_str", "VARCHAR(255)",
+                        "second_str", "VARCHAR(255)",
+                        "result", "VARCHAR(520)"
                 )
         );
         final String dbName = "task_4";
@@ -73,48 +74,6 @@ public class Main extends BaseTask {
         main.closeConnection();
     }
 
-    public void input() throws SQLException{
-
-        if (!sqlTools.hasTables()) {
-            System.out.println("Ошибка: В базе данных нет ни одной таблицы. Сначала создайте таблицу (пункт 2 меню).");
-            return;
-        }
-
-        Scanner scanner = new Scanner(System.in);
-
-        TableAndColumns tableAndCols = promptTableAndColumns(
-                scanner,
-                List.of(
-                        "Введите название столбца для хранения первой строки (тип VARCHAR(255)): ",
-                        "Введите название столбца для хранения второй строки (тип VARCHAR(255)): "
-                )
-        );
-
-        if (tableAndCols == null) {
-            return;
-        }
-
-        String string1 = getNonEmptyInput(scanner, "Введите первую строку: ");
-        String string2 = getNonEmptyInput(scanner, "Введите вторую строку: ");
-
-        lastString1 = string1;
-        lastString2 = string2;
-
-        Map<String, Object> dataLogical = Map.of(
-                "Введите название столбца для хранения первой строки (тип VARCHAR(255)): ", string1,
-                "Введите название столбца для хранения второй строки (тип VARCHAR(255)): ", string2
-        );
-
-        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
-
-        insertRowIntoDB(
-                tableAndCols.getTableName(),
-                dataReal
-        );
-
-        System.out.println("Первая строка: " + string1 + ", Вторая строка: " + string2);
-    }
-
     public void substringByIndex() throws SQLException {
         Scanner scanner = new Scanner(System.in);
 
@@ -122,8 +81,9 @@ public class Main extends BaseTask {
                 scanner,
                 List.of(
                         "Введите название столбца для хранения операции (тип VARCHAR(255)): ",
-                        "Введите название столбца для хранения входной строки (тип VARCHAR(510)): ",
-                        "Введите название столбца для хранения результата операции (тип VARCHAR(510)): "
+                        "Введите название столбца для хранения первой строки (тип VARCHAR(255)): ",
+                        "Введите название столбца для хранения индекса (тип SERIAL): ",
+                        "Введите название столбца для хранения результата операции (тип VARCHAR(520)): "
                 )
         );
 
@@ -165,8 +125,9 @@ public class Main extends BaseTask {
 
         Map<String, Object> dataLogical = Map.of(
                 "Введите название столбца для хранения операции (тип VARCHAR(255)): ", "Substring",
-                "Введите название столбца для хранения входной строки (тип VARCHAR(510)): ", input,
-                "Введите название столбца для хранения результата операции (тип VARCHAR(510)): ", result
+                "Введите название столбца для хранения первой строки (тип VARCHAR(255)): ", input,
+                "Введите название столбца для хранения индекса (тип SERIAL): ", endIndex,
+                "Введите название столбца для хранения результата операции (тип VARCHAR(520)): ", result
         );
 
 
@@ -181,8 +142,22 @@ public class Main extends BaseTask {
         System.out.println("Результат: " + result);
     }
 
-    public void changeCase() {
+    public void changeCase() throws SQLException {
         Scanner scanner = new Scanner(System.in);
+
+        TableAndColumns tableAndCols = promptTableAndColumns(
+                scanner,
+                List.of(
+                        "Введите название столбца для хранения операции (тип VARCHAR(255)): ",
+                        "Введите название столбца для хранения входной строки (тип VARCHAR(255)): ",
+                        "Введите название столбца для хранения результата операции (тип VARCHAR(520)): "
+                )
+        );
+
+        if (tableAndCols == null) {
+            return;
+        }
+
         System.out.println("Введите строку: ");
         String input = scanner.nextLine();
 
@@ -192,24 +167,36 @@ public class Main extends BaseTask {
         System.out.println("Верхний регистр: " + upperCase);
         System.out.println("Нижний регистр: " + lowerCase);
 
-        try {
-            sqlTools.insertRowIntoDB("strings", Map.of(
-                    "operation", "uppercase",
-                    "input", input,
-                    "result", upperCase
-            ));
-            sqlTools.insertRowIntoDB("strings", Map.of(
-                    "operation", "lowercase",
-                    "input", input,
-                    "result", lowerCase
-            ));
-        } catch (SQLException e) {
-            System.out.println("Ошибка при сохранении в БД: " + e.getMessage());
-        }
+        Map<String, Object> dataLogical = Map.of(
+                "Введите название столбца для хранения операции (тип VARCHAR(255)): ", "Upper/Lower Case",
+                "Введите название столбца для хранения входной строки (тип VARCHAR(255)): ", input,
+                "Введите название столбца для хранения результата операции (тип VARCHAR(520)): ", upperCase + " + " + lowerCase
+        );
+
+        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+        String table = tableAndCols.getTableName();
+
+        insertRowIntoDB(
+                table,
+                dataReal
+        );
     }
 
-    public void searchSubstring() {
+    public void searchSubstring() throws SQLException {
         Scanner scanner = new Scanner(System.in);
+
+        TableAndColumns tableAndCols = promptTableAndColumns(
+                scanner,
+                List.of(
+                        "Введите название столбца для хранения операции (тип VARCHAR(255)): ",
+                        "Введите название столбца для хранения входной строки (тип VARCHAR(255)): ",
+                        "Введите название столбца для хранения результата операции (тип VARCHAR(520)): "
+                )
+        );
+
+        if (tableAndCols == null) {
+            return;
+        }
         System.out.println("Введите строку: ");
         String input = scanner.nextLine();
 
@@ -222,14 +209,18 @@ public class Main extends BaseTask {
         String result = "Индекс: " + index + ", Заканчивается подстрокой: " + endsWithSubstring;
         System.out.println(result);
 
-        try {
-            sqlTools.insertRowIntoDB("strings", Map.of(
-                    "operation", "search",
-                    "input", input + " (искомое: " + substring + ")",
-                    "result", result
-            ));
-        } catch (SQLException e) {
-            System.out.println("Ошибка при сохранении в БД: " + e.getMessage());
-        }
+        Map<String, Object> dataLogical = Map.of(
+                "Введите название столбца для хранения операции (тип VARCHAR(255)): ", "Найти индекс подстроки",
+                "Введите название столбца для хранения входной строки (тип VARCHAR(510)): ", input,
+                "Введите название столбца для хранения результата операции (тип VARCHAR(510)): ", result
+        );
+
+        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
+        String table = tableAndCols.getTableName();
+
+        insertRowIntoDB(
+                table,
+                dataReal
+        );
     }
 }
