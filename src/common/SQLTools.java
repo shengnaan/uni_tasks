@@ -70,10 +70,10 @@ public final class SQLTools {
     }
 
 
-    public void insertRowIntoDB(String tablename, Map<String, Object> data) throws SQLException {
-        System.out.println(tablename);
-        if (!isTableExists(tablename)) {
-            throw new SQLException("Не найдена схема для таблицы '" + tablename + "'");
+    public void insertRowIntoDB(String tableName, Map<String, Object> data) throws SQLException {
+        System.out.println(tableName);
+        if (!isTableExists(tableName)) {
+            throw new SQLException("Не найдена схема для таблицы '" + tableName + "'");
         }
 
         if (data == null || data.isEmpty()) {
@@ -83,7 +83,7 @@ public final class SQLTools {
         String columns = String.join(", ", data.keySet());
         String placeholders = String.join(", ", data.keySet().stream().map(k -> "?").toList());
 
-        String sql = "INSERT INTO " + tablename + " (" + columns + ") VALUES (" + placeholders + ")";
+        String sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + placeholders + ")";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             int index = 1;
