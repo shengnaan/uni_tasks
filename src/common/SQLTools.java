@@ -71,6 +71,7 @@ public final class SQLTools {
 
 
     public void insertRowIntoDB(String tablename, Map<String, Object> data) throws SQLException {
+        System.out.println(tablename);
         if (!isTableExists(tablename)) {
             throw new SQLException("Не найдена схема для таблицы '" + tablename + "'");
         }
