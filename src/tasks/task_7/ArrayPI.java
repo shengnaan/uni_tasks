@@ -4,10 +4,10 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class ArrayPI {
-    protected int[] array;
+    public double[] array;
 
     public ArrayPI() {
-        this.array = new int[35];
+        this.array = new double[35];
     }
 
     public void fillArrayFromKeyboard() {

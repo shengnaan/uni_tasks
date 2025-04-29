@@ -1,39 +1,74 @@
+// tasks/task_7/Main.java
 package tasks.task_7;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tasks.task_7.commands.*;
 import common.BaseTask;
 import common.SQLTools;
-import org.postgresql.util.PGobject;
 
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
-import static java.lang.Integer.parseInt;
+public class Main {
 
-public class Main extends BaseTask {
-    private boolean isEnd = false;
-    private Sort sort;
-    private long lastInsertedId;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String MENU_TEXT = """
+            1. Вывести все таблицы из БД
+            2. Создать таблицу в БД
+            3. Ввести массив и сохранить его в БД
+            4. Отсортировать массив (ASC & DESC) и сохранить
+            5. Сохранить результаты в Excel
+            6. Показать меню
+            7. Выход
+            """;
 
-    public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
-        super(new SQLTools(dbName, tableSchemas));
-        menuText = """
-                1. Вывести все таблицы из БД.
-                2. Создать таблицу в БД.
-                3. Ввести одномерный массив и сохранить его в БД с последующим выводом в консоль
-                4. Отсортировать массив, сохранить результаты по возрастанию и убыванию в БД и вывести в консоль
-                5. Сохранить результаты из БД в Excel и вывести их в консоль
-                6. Показать меню
-                7. Остановить программу.
-                """;
-        BaseTask.tableSchemas = tableSchemas;
+    private final Map<Integer, MenuCommand> commands = new HashMap<>();
+    private final SQLTools sqlTools;
+
+    public Main(String dbName, Map<String, Map<String, String>> schemas) throws SQLException {
+        this.sqlTools = new SQLTools(dbName, schemas);
+
+        BaseTask.tableSchemas = schemas;
+
+        ArrayContext ctx = new ArrayContext();
+
+        commands.put(1, new ShowTablesCommand(sqlTools));
+        commands.put(2, new CreateTablesCommand(sqlTools));
+        commands.put(3, new InputArrayCommand(sqlTools, ctx));
+        commands.put(4, new SortArrayCommand(sqlTools, ctx));
+        commands.put(5, new SaveToExcelCommand(sqlTools));
+        commands.put(6, new ShowMenuCommand(sqlTools, MENU_TEXT));
+    }
+
+    public void run() throws SQLException {
+        System.out.println("Практическая работа 7");
+        System.out.println(MENU_TEXT);
+
+        try (Scanner sc = new Scanner(System.in)) {
+            while (true) {
+                String raw = sc.next();
+                if ("7".equals(raw)) break;
+
+                int key;
+                try {
+                    key = Integer.parseInt(raw);
+                } catch (NumberFormatException e) {
+                    System.out.println("Неверный ввод!");
+                    continue;
+                }
+
+                MenuCommand cmd = commands.get(key);
+                if (cmd == null) {
+                    System.out.println("Пункта меню не существует.");
+                    continue;
+                }
+                cmd.execute();
+            }
+        }
+        sqlTools.closeConnection();
+        System.out.println("Программа завершила работу.");
     }
 
     public static void main(String[] args) throws SQLException {
-        final Map<String, Map<String, String>> tableSchemas = Map.of(
+        Map<String, Map<String, String>> schemas = Map.of(
                 "arrays", Map.of(
                         "id", "SERIAL",
                         "initial_array", "JSON",
@@ -41,128 +76,6 @@ public class Main extends BaseTask {
                         "desc_sorted_array", "JSON"
                 )
         );
-        final String dbName = "task_7";
-        Main main = new Main(dbName, tableSchemas);
-
-        System.out.println("Практическая работа 6");
-        main.showMenu(menuText);
-
-        String var = "";
-        int menuPunkt = 0;
-        Scanner sc = new Scanner(System.in);
-
-        while (!"7".equals(var)) {
-            var = sc.next();
-            try {
-                menuPunkt = parseInt(var);
-            } catch (NumberFormatException e) {
-                System.out.println("Неверный формат ввода!");
-                continue;
-            }
-
-            switch (menuPunkt) {
-                case 1 -> main.showTables();
-                case 2 -> main.createTables();
-                case 3 -> main.inputArray();
-                case 4 -> main.sortArray();
-                case 5 -> main.saveToExcel();
-                case 6 -> main.showMenu(menuText);
-                case 7 -> System.out.println("Программа завершила работу");
-                default -> System.out.println("Неверная опция");
-            }
-        }
-        main.closeConnection();
-    }
-
-    private void inputArray() throws SQLException {
-        if (!hasTables()) {
-            System.out.println("Ошибка: нет созданных таблиц. Сначала создайте хотя бы одну (пункт 2).");
-            return;
-        }
-
-        Scanner scanner = new Scanner(System.in);
-        TableAndColumns tableAndCols = promptTableAndColumns(scanner, List.of(
-                "Укажите столбец для исходного массива"
-        ));
-
-        sort = new Sort();
-        sort.fillArrayFromKeyboard();
-        isEnd = true;
-
-        PGobject arrayJson = new PGobject();
-        try {
-            arrayJson.setType("json");
-            arrayJson.setValue(objectMapper.writeValueAsString(sort.array));
-        } catch (Exception e) {
-            System.out.println("Ошибка при преобразовании в JSON: " + e.getMessage());
-            return;
-        }
-
-        Map<String, Object> logicalMap = Map.of(
-                "Укажите столбец для исходного массива", arrayJson
-        );
-
-        Map<String, Object> dbMap = tableAndCols.createInsertMap(logicalMap);
-        String table = tableAndCols.getTableName();
-
-        insertRowIntoDB(table, dbMap);
-
-        this.lastInsertedId = sqlTools.getLastInsertedId(table, sqlTools.findSerialColumn(table));
-        System.out.println("Массив успешно сохранен в таблицу: " + tableAndCols.getTableName());
-    }
-
-    private void sortArray() throws SQLException {
-        if (!isEnd) {
-            System.out.println("Сначала введите массив (пункт 3).");
-            return;
-        }
-
-        // Спросим у пользователя столбцы для возрастающей и убывающей сортировок
-        Scanner scanner = new Scanner(System.in);
-        TableAndColumns tableAndCols = promptTableAndColumns(
-                scanner,
-                List.of(
-                        "Укажите столбец для массива, отсортированного по возрастанию",
-                        "Укажите столбец для массива, отсортированного по убыванию"
-                )
-        );
-
-        // Сортируем по возрастанию
-        sort.bubbleSortAscending();
-        PGobject ascJson = new PGobject();
-        try {
-            ascJson.setType("json");
-            ascJson.setValue(objectMapper.writeValueAsString(sort.array));
-        } catch (Exception e) {
-            System.out.println("Ошибка при преобразовании результата (возрастание) в JSON: " + e.getMessage());
-            return;
-        }
-
-        // Сортируем по убыванию
-        sort.bubbleSortDescending();
-        PGobject descJson = new PGobject();
-        try {
-            descJson.setType("json");
-            descJson.setValue(objectMapper.writeValueAsString(sort.array));
-        } catch (Exception e) {
-            System.out.println("Ошибка при преобразовании результата (убывание) в JSON: " + e.getMessage());
-            return;
-        }
-
-        // Сохраняем обе сортировки сразу
-        Map<String, Object> logicalMap = Map.of(
-                "Укажите столбец для массива, отсортированного по возрастанию", ascJson,
-                "Укажите столбец для массива, отсортированного по убыванию", descJson
-        );
-        Map<String, Object> dbMap = tableAndCols.createInsertMap(logicalMap);
-
-        updateRowInDB(
-                tableAndCols.getTableName(),
-                dbMap,
-                lastInsertedId
-        );
-
-        System.out.println("Отсортированные массивы (по возрастанию и убыванию) сохранены в строку с ID = " + lastInsertedId);
-        isEnd = false;
+        new Main("task_7", schemas).run();
     }
 }
