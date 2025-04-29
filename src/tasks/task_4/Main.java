@@ -75,6 +75,10 @@ public class Main extends BaseTask {
     }
 
     public void substringByIndex() throws SQLException {
+        if (!sqlTools.hasTables()) {
+            System.out.println("Ошибка: в базе данных нет ни одной таблицы. Сначала создайте таблицы (пункт 2 меню).");
+            return;
+        }
         Scanner scanner = new Scanner(System.in);
 
         TableAndColumns tableAndCols = promptTableAndColumns(
@@ -143,6 +147,10 @@ public class Main extends BaseTask {
     }
 
     public void changeCase() throws SQLException {
+        if (!sqlTools.hasTables()) {
+            System.out.println("Ошибка: в базе данных нет ни одной таблицы. Сначала создайте таблицы (пункт 2 меню).");
+            return;
+        }
         Scanner scanner = new Scanner(System.in);
 
         TableAndColumns tableAndCols = promptTableAndColumns(
@@ -183,6 +191,10 @@ public class Main extends BaseTask {
     }
 
     public void searchSubstring() throws SQLException {
+        if (!sqlTools.hasTables()) {
+            System.out.println("Ошибка: в базе данных нет ни одной таблицы. Сначала создайте таблицы (пункт 2 меню).");
+            return;
+        }
         Scanner scanner = new Scanner(System.in);
 
         TableAndColumns tableAndCols = promptTableAndColumns(
