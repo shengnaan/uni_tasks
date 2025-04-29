@@ -1,6 +1,8 @@
 package tasks.task_6;
 
+import common.BaseTask;
 import common.SQLTools;
+import tasks.task_6.commands.*;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -22,7 +24,8 @@ public class Main {
 
     public Main(String dbName, Map<String, Map<String, String>> schemas) throws SQLException {
         this.sqlTools = new SQLTools(dbName, schemas);
-        common.BaseTask.tableSchemas = schemas;
+        BaseTask.tableSchemas = schemas;
+        BaseTask.menuText = MENU_TEXT;
         MatrixContext ctx = new MatrixContext();
 
         commands.put(1, new ShowTablesCommand(sqlTools));

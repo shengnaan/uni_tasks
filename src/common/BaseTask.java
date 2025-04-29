@@ -5,7 +5,7 @@ import java.util.*;
 
 public abstract class BaseTask {
     protected SQLTools sqlTools;
-    protected static String menuText;
+    public static String menuText;
     public static Map<String, Map<String, String>> tableSchemas;
     protected static final String exitCommand = "0";
 

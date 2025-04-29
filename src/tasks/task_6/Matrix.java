@@ -8,7 +8,7 @@ public final class Matrix extends ArrayPI {
         super();
     }
 
-    void multiplyMatrices() {
+    public void multiplyMatrices() {
         resultMatrix = new int[3][3];
 
         for (int i = 0; i < 3; i++) {

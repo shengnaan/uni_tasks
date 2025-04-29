@@ -27,6 +27,7 @@ public class Main {
         this.sqlTools = new SQLTools(dbName, schemas);
 
         BaseTask.tableSchemas = schemas;
+        BaseTask.menuText = MENU_TEXT;
 
         ArrayContext ctx = new ArrayContext();
 

@@ -1,8 +1,10 @@
-package tasks.task_6;
+package tasks.task_6.commands;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.postgresql.util.PGobject;
 import common.SQLTools;
+import tasks.task_6.Matrix;
+import tasks.task_6.MatrixContext;
 
 import java.sql.SQLException;
 import java.util.List;

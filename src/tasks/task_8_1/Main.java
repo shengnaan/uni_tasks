@@ -24,6 +24,7 @@ public class Main {
     public Main(String dbName, Map<String, Map<String, String>> schemas) throws SQLException {
         this.sqlTools = new SQLTools(dbName, schemas);
         BaseTask.tableSchemas = schemas;
+        BaseTask.menuText = MENU_TEXT;
 
         WorkerContext ctx = new WorkerContext();
 

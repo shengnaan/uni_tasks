@@ -1,4 +1,4 @@
-package tasks.task_6;
+package tasks.task_6.commands;
 
 import common.SQLTools;
 
