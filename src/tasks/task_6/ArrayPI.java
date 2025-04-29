@@ -1,6 +1,5 @@
 package tasks.task_6;
 
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class ArrayPI {

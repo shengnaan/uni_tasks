@@ -6,7 +6,7 @@ import java.util.*;
 public abstract class BaseTask {
     protected SQLTools sqlTools;
     protected static String menuText;
-    protected static Map<String, Map<String, String>> tableSchemas;
+    public static Map<String, Map<String, String>> tableSchemas;
     protected static final String exitCommand = "0";
 
     public BaseTask(SQLTools sqlTools) throws SQLException {
