@@ -6,9 +6,6 @@ import java.util.Map;
 public class Worker extends Student {
     private double salary;
 
-    public Worker(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
-        super(dbName, tableSchemas);
-    }
 
     public void setSalary(double salary) {
         this.salary = salary;

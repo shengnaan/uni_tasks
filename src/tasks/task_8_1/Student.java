@@ -6,13 +6,9 @@ import common.SQLTools;
 import java.sql.SQLException;
 import java.util.Map;
 
-public abstract class Student extends BaseTask {
+public abstract class Student {
     private String name;
     private int age;
-
-    public Student(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
-        super(new SQLTools(dbName, tableSchemas));
-    }
 
     public void setName(String name) {
         this.name = name;

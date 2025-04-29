@@ -1,144 +1,77 @@
 package tasks.task_8_1;
 
+import tasks.task_8_1.commands.*;
 import common.BaseTask;
+import common.SQLTools;
 
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
-import static java.lang.Integer.parseInt;
+public class Main {
 
-public class Main extends Worker {
+    private static final String MENU_TEXT = """
+            1. Вывести все таблицы из БД
+            2. Создать таблицу(-ы)
+            3. Ввести имя-возраст-зарплату и сохранить
+            4. Сохранить данные в Excel
+            5. Показать меню
+            6. Выход
+            """;
 
-    public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
-        super(dbName, tableSchemas);
-        menuText = """
-                1. Вывести все таблицы из БД.
-                2. Создать таблицу(-ы) в БД.
-                3. Ввести имя, возраст и зарплату и сохранить в БД с последующим выводом в консоль.
-                4. Сохранить все данные (вышеполученные результаты) из БД в Excel и вывести на экран.
-                5. Показать меню
-                6. Остановить программу.
-                """;
-        BaseTask.tableSchemas = tableSchemas;
+    private final Map<Integer, MenuCommand> commands = new HashMap<>();
+    private final SQLTools sqlTools;
+
+    public Main(String dbName, Map<String, Map<String, String>> schemas) throws SQLException {
+        this.sqlTools = new SQLTools(dbName, schemas);
+        BaseTask.tableSchemas = schemas;
+
+        WorkerContext ctx = new WorkerContext();
+
+        commands.put(1, new ShowTablesCommand(sqlTools));
+        commands.put(2, new CreateTablesCommand(sqlTools));
+        commands.put(3, new InputWorkerCommand(sqlTools, ctx));
+        commands.put(4, new SaveToExcelCommand(sqlTools));
+        commands.put(5, new ShowMenuCommand(sqlTools, MENU_TEXT));
+    }
+
+    public void run() throws SQLException {
+        System.out.println("Практическая работа 8.1");
+        System.out.println(MENU_TEXT);
+
+        try (Scanner sc = new Scanner(System.in)) {
+            while (true) {
+                String raw = sc.next();
+                if ("6".equals(raw)) break;
+
+                int key;
+                try {
+                    key = Integer.parseInt(raw);
+                } catch (NumberFormatException e) {
+                    System.out.println("Неверный ввод!");
+                    continue;
+                }
+
+                MenuCommand cmd = commands.get(key);
+                if (cmd == null) {
+                    System.out.println("Нет такого пункта.");
+                    continue;
+                }
+                cmd.execute();
+            }
+        }
+        sqlTools.closeConnection();
+        System.out.println("Программа завершила работу.");
     }
 
     public static void main(String[] args) throws SQLException {
-        final Map<String, Map<String, String>> tableSchemas = Map.of(
+        Map<String, Map<String, String>> schemas = Map.of(
                 "students", Map.of(
+                        "id", "SERIAL",
                         "name", "VARCHAR(255)",
                         "age", "INT4",
                         "salary", "FLOAT8"
                 )
         );
-        final String dbName = "task_8_1";
-        Main main = new Main(dbName, tableSchemas);
-
-        System.out.println("Практическая работа 8.1");
-        main.showMenu(menuText);
-
-        String var = "";
-        int menuPunkt = 0;
-        Scanner sc = new Scanner(System.in);
-
-        while (!"6".equals(var)) {
-            var = sc.next();
-
-            try {
-                menuPunkt = parseInt(var);
-            } catch (NumberFormatException e) {
-                System.out.println("Неверный формат ввода!");
-                continue;
-            }
-
-            switch (menuPunkt) {
-                case 1 -> main.showTables();
-                case 2 -> main.createTables();
-                case 3 -> main.inputData(dbName, tableSchemas);
-                case 4 -> main.saveToExcel();
-                case 5 -> main.showMenu(menuText);
-                case 6 -> System.out.println("Программа завершила работу");
-                default -> System.out.println("Неверная опция");
-            }
-        }
-        main.closeConnection();
-    }
-
-    private void inputData(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
-        if (!hasTables()) {
-            System.out.println("Ошибка: нет созданных таблиц. Сначала создайте хотя бы одну (пункт 2).");
-            return;
-        }
-
-        Scanner scanner = new Scanner(System.in);
-        TableAndColumns tableAndCols = promptTableAndColumns(
-                scanner,
-                List.of(
-                        "Укажите столбец для имени (тип VARCHAR(255)):",
-                        "Укажите столбец для возраста (тип INT4):",
-                        "Укажите столбец для зарплаты (тип FLOAT8):"
-                )
-        );
-
-        if (tableAndCols == null) {
-            return;
-        }
-
-        Worker worker = new Worker(dbName, tableSchemas);
-        String name;
-        do {
-            System.out.println("Введите имя:");
-            name = scanner.nextLine().trim();
-            if (name.length() > 255) {
-                System.out.println("Ошибка: длинна имени должна быть до 255 символов.");
-            }
-        } while (name.length() > 255);
-        worker.setName(name);
-
-        int age = -1;
-        do {
-            System.out.println("Введите возраст:");
-            try {
-                age = Integer.parseInt(scanner.nextLine());
-                if (age < 0 || age > 120) {
-                    System.out.println("Ошибка: возраст должен быть целым числом от 0 до 120.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Ошибка: введите целое число.");
-                age = -1;
-            }
-        } while (age < 0 || age > 120);
-        worker.setAge(age);
-
-        double salary = -1;
-        do {
-            System.out.println("Введите зарплату:");
-            try {
-                salary = Integer.parseInt(scanner.nextLine());
-                if (salary < 0) {
-                    System.out.println("Ошибка: зарплата должна быть числом от 0 до 10000000000.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Ошибка: введите число.");
-                salary = -1;
-            }
-        } while (salary < 0);
-        worker.setSalary(salary);
-
-        Map<String, Object> dataLogical = Map.of(
-                "Укажите столбец для имени (тип VARCHAR(255)):", worker.getName(),
-                "Укажите столбец для возраста (тип INT4):", worker.getAge(),
-                "Укажите столбец для зарплаты (тип FLOAT8):", worker.getSalary()
-        );
-        Map<String, Object> dataReal = tableAndCols.createInsertMap(dataLogical);
-
-        insertRowIntoDB(
-                tableAndCols.getTableName(),
-                dataReal
-        );
-        System.out.println("Студент: " + worker.getName());
-        System.out.println("Возраст: " + worker.getAge());
-        System.out.println("ЗП: " + worker.getSalary());
+        new Main("task_8_1", schemas).run();
     }
 }
