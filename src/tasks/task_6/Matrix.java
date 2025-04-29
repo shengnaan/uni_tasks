@@ -9,12 +9,12 @@ public final class Matrix extends ArrayPI {
     }
 
     public void multiplyMatrices() {
-        resultMatrix = new int[3][3];
+        resultMatrix = new int[7][7];
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; i < 7; i++) {
+            for (int j = 0; j < 7; j++) {
                 int sum = 0;
-                for (int k = 0; k < 3; k++) {
+                for (int k = 0; k < 7; k++) {
                     sum += matrixA[i][k] * matrixB[k][j];
                 }
                 resultMatrix[i][j] = sum;
@@ -24,8 +24,8 @@ public final class Matrix extends ArrayPI {
 
     public void printResultMatrix() {
         System.out.println("Результирующая матрица (произведение A и B):");
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; i < 7; i++) {
+            for (int j = 0; j < 7; j++) {
                 System.out.printf(" %4d", resultMatrix[i][j]);
             }
             System.out.println();
