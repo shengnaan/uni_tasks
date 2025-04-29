@@ -31,7 +31,7 @@ public class ArrayPI {
 
     private int readInt(Scanner sc) {
         while (!sc.hasNextInt()) {
-            System.out.println("Ошибка: введите целое число!");
+            System.out.println("Ошибка: введите число!");
             sc.next();
         }
         return sc.nextInt();
