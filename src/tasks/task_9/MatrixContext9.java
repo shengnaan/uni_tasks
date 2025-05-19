@@ -1,18 +1,18 @@
-package tasks.task_6;
+package tasks.task_9;
 
-public class MatrixContext{
-    private Matrix matrix;
+public class MatrixContext9 {
+    private MultiplyMatrix matrix;
     private long lastInsertedId;
 
     public boolean hasMatrices() {
         return matrix != null;
     }
 
-    public Matrix getMatrix() {
+    public MultiplyMatrix getMatrix() {
         return matrix;
     }
 
-    public void setMatrix(Matrix m) {
+    public void setMatrix(MultiplyMatrix m) {
         this.matrix = m;
     }
 
@@ -24,5 +24,3 @@ public class MatrixContext{
         this.lastInsertedId = id;
     }
 }
-
-
