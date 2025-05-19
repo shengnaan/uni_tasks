@@ -327,4 +327,28 @@ public final class SQLTools {
     private boolean shouldExitToMenu(String input) {
         return exitCommand.equals(input.trim());
     }
+
+    public ResultSet executeQuery(String sql) throws SQLException {
+        return conn.createStatement().executeQuery(sql);
+    }
+
+    public ResultSet executeQuery(String sql, List<Object> params) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(sql);
+        for (int i = 0; i < params.size(); i++) {
+            stmt.setObject(i + 1, params.get(i));
+        }
+        return stmt.executeQuery();
+    }
+
+    public int executeUpdate(String sql) throws SQLException {
+        return conn.createStatement().executeUpdate(sql);
+    }
+
+    public int executeUpdate(String sql, List<Object> params) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(sql);
+        for (int i = 0; i < params.size(); i++) {
+            stmt.setObject(i + 1, params.get(i));
+        }
+        return stmt.executeUpdate();
+    }
 }
