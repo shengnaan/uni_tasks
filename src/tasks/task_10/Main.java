@@ -10,12 +10,12 @@ public class Main extends BaseTask {
     public Main(String dbName, Map<String, Map<String, String>> tableSchemas) throws SQLException {
         super(new SQLTools(dbName, tableSchemas));
         menuText = """
-                1. Вывести все таблицы из базы данных PostgreSQL.
-                2. Создать таблицу в базе данных PostgreSQL.
-                3. Ввести данные о всех студентах и сохранить их в PostgreSQL с выводом в консоль.
-                4. Вывести данные о студенте по ID из PostgreSQL.
-                5. Удалить данные о студенте из PostgreSQL по ID.
-                6. Сохранить итоговые результаты из PostgreSQL в Excel и вывести их в консоль.
+                1. Вывести все таблицы из БД.
+                2. Создать таблицу в БД.
+                3. Ввести данные о всех студентах и сохранить их с выводом в консоль.
+                4. Вывести данные о студенте по ID.
+                5. Удалить данные о студенте по ID.
+                6. Сохранить итоговые результаты в Excel и вывести их в консоль.
                 7. Показать меню.
                 8. Остановить программу.
                 """;
@@ -67,6 +67,7 @@ public class Main extends BaseTask {
     }
 
     public void inputStudentsData() throws SQLException {
+
         if (!sqlTools.hasTables()) {
             System.out.println("Ошибка: в базе данных нет ни одной таблицы. Сначала создайте таблицы (пункт 2 меню).");
             return;
@@ -100,11 +101,6 @@ public class Main extends BaseTask {
             System.out.print("Группа: ");
             String group = scanner.nextLine();
 
-            Map<String, Object> data = Map.of(
-                    "full_name", fullName,
-                    "direction", direction,
-                    "group_name", group
-            );
 
             sqlTools.executeUpdate("INSERT INTO students (full_name, direction, group_name) VALUES (?, ?, ?)",
                     Arrays.asList(fullName, direction, group));
@@ -119,8 +115,6 @@ public class Main extends BaseTask {
 
     private void printStudentsTable() throws SQLException {
         ResultSet rs = sqlTools.executeQuery("SELECT * FROM students ORDER BY id");
-        ResultSetMetaData metaData = rs.getMetaData();
-        int columnCount = metaData.getColumnCount();
 
         // Вывод заголовков
         System.out.println("+" + "-".repeat(10) + "+" + "-".repeat(30) + "+" + "-".repeat(30) + "+" + "-".repeat(15) + "+");
